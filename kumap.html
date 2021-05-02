@@ -121,7 +121,11 @@
 				          .style("top",  (posY)+"px");
 				//町丁目名、情報をtooltipに表示
 				//マウスオーバーしているgeojsonの町丁目名と等しい町丁目名のレコードをcsvdataから検索する
-				const result = csvdata.find((v) => v.町丁目名 === d.properties.S_NAME);
+				//ES6の書き方だと以下だが、IE11では動かないのでその下の記述を採用（Babelで変換）
+				//const result = csvdata.find((v) => v.町丁目名 === d.properties.S_NAME);
+				var result = csvdata.find(function (v) {
+					return v.町丁目名 === d.properties.S_NAME;
+				});
 				var info1 = result.町丁目名;
 				var info2 = "人口:" + result.総数 + "人";
 				var info3 = "世帯:" + result.世帯数 + "世帯";

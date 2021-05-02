@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="utf8">
+	<title></title>
+	<meta charset="utf-8">
+	<script src="https://d3js.org/d3.v6.min.js"></script>
+	<style>
+		body { font-family: "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif; }
+		svg { border:1px; background-color: white; text-align:left; }
+		path { fill:white; stroke:black; stroke-width:0.25; }
+		h1,h2,p { padding: 6px; text-align: center; }
+		.tooltip { 
+			position:absolute;
+			pointer-events: none;
+			visibility: visible;
+			padding: 5px 12px 10px;
+			color : #666;
+			z-index:9999;
+		}
+		.infowindow { 
+			position:absolute;
+			pointer-events: none;
+			padding: 5px 12px 10px;
+			width: 200px;
+			height: 150px;
+			background: #fff;
+			-webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+			-moz-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+			box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+			border-radius: 5px;
+			color : #666;
+			z-index:9998;
+		}
+	</style>
+  </head>
+  <body>
+	<h1><div id="kuname"></div></h1>
+	<h2>町丁目をクリックするとデータが表示されます。</h2>
+	<script>
+	//
+	//-----第１段階　トップページでクリックした区の区名とcsv,geojsonのファイル名
+	//区名、マップ中心表示のための緯度経度パラメーターを前ページから受け取り、パースする処理
+	var param = location.search; // アドレスの「?」以降の引数(パラメータ)を取得
+	param = param.substring(1); //先頭の?をカット
+	var pair = param.split("&"); //&で引数を分割
+	var temp = "";
+	var key = new Array();
+	for (var i=0;i<pair.length;i++){
+		temp = pair[i].split("="); //配列を=で分割
+		keyName = temp[0];
+		keyValue = temp[1];
+		//キーと値の連想配列を生成
+		key[keyName] = keyValue;
+	}
+	var ku = decodeURIComponent(key["ku"]);
+	var file = decodeURIComponent(key["file"]);
+	//トップページからクリックで引き継いだ区名をidタグkunameに表示する処理
+	document.getElementById("kuname").innerHTML = ku + "ごみ収集時間マップ";
+	//
+	//-----第２段階　csvとgeojsonを読み込む
+	//変数初期化
+	var csvfile = file + ".csv";  //町丁目ごとのデータを記録したCSVファイル
+	var geojsonfile = file + ".geojson";  //eStatから取得した境界データshpをQJISでgeojsonに変換したファイル
+	var fontSize = "20px";
+	var csvdata = [];  //CSV格納先
+	//CSV読み込み
+	d3.csv(csvfile).then(function(data){
+		//行ごとにcsvdataに格納していく
+		data.forEach(function(element){
+			//console.log(element);
+			csvdata.push(element);
+		});
+	});
+	//
+	//------第３段階　町丁目を描画する
+	//描画エリア設定
+	var width  = window.innerWidth;
+	var height = window.innerHeight;
+	//svg
+	var svg=d3.select("body").append("svg").attr("width", width).attr("height", height);
+	//町丁目名、時刻を表示するツールチップを設定（コメントアウト分はSVGは改行できない）
+	var tooltip1 = d3.select("body").append("div").attr("class", "tooltip");
+	var tooltip2 = d3.select("body").append("div").attr("class", "tooltip");
+	var tooltip3 = d3.select("body").append("div").attr("class", "tooltip");
+	var tooltip4 = d3.select("body").append("div").attr("class", "tooltip");
+	var tooltip5 = d3.select("body").append("div").attr("class", "tooltip");
+	var infowindow = d3.select("body").append("rect").attr("class", "infowindow");
+	//geojson読み込み
+	d3.json(geojsonfile).then(function(json){
+		//描画レスポンシブ対応 中心と移動も画面サイズで自動調整
+		var projection = d3.geoMercator()
+	    .fitExtent([[0, 0],[width, height-100]], json);
+		//path設定
+		var path = d3.geoPath(projection);
+		//描画、マウス反応
+		svg.append("g").selectAll("path")
+		    .data(json.features)
+			.enter()
+			.append("path")
+			.attr("d", path)
+			.style("fill", function(d,i){
+				if(d.properties.JINKO=="0"){
+					return "#EEEEEE";
+				}
+				return "#CEF6CE";
+			})
+			.on('click', function(event,d){
+				//alert(Object.keys(csvdata[0]));
+				//alert(csvdata[0]["町丁目名"]);
+				//const result = csvdata.find((v) => v.町丁目名 === d.properties.S_NAME);
+				//alert(result.町丁目名);
+			})
+			.on('mouseover', function(event,d){
+				d3.select(this)
+				.style("fill","pink");
+				//画面端になるとinfowindow内文字が見えなくなるのを防ぐ(画面半分超えると座標-200) 3項演算子
+				var posX = event.pageX > innerWidth/2 ? event.pageX - 200 : event.pageX;
+				var posY = event.pageY > innerHeight/2 ? event.pageY - 200 : event.pageY;
+				//infowindowの下地と枠
+				infowindow.style("left", (posX)+"px")
+				          .style("top",  (posY)+"px");
+				//町丁目名、情報をtooltipに表示
+				//マウスオーバーしているgeojsonの町丁目名と等しい町丁目名のレコードをcsvdataから検索する
+				const result = csvdata.find((v) => v.町丁目名 === d.properties.S_NAME);
+				var info1 = result.町丁目名;
+				var info2 = "人口:" + result.総数 + "人";
+				var info3 = "世帯:" + result.世帯数 + "世帯";
+				var info4 = "０歳:" + result["０歳"] + "人";
+				var info5 = "65歳:" + result["６５歳"] + "人";
+				tooltip1.style("font-size", fontSize)
+				        .style("left", (posX)+"px")
+					    .style("top",  (posY)+"px")
+					    .text(info1);
+				tooltip2.style("font-size", fontSize)
+				        .style("left", (posX)+"px")
+					    .style("top",  (posY+30)+"px")
+					    .text(info2);
+				tooltip3.style("font-size", fontSize)
+				        .style("left", (posX)+"px")
+					    .style("top",  (posY+60)+"px")
+					    .text(info3);
+				tooltip4.style("font-size", fontSize)
+				        .style("left", (posX)+"px")
+					    .style("top",  (posY+90)+"px")
+					    .text(info4);
+				tooltip5.style("font-size", fontSize)
+				        .style("left", (posX)+"px")
+					    .style("top",  (posY+120)+"px")
+					    .text(info5);
+			})
+			.on('mouseout', function(d,i){
+				d3.select(this)
+				.style("fill", function(d,i){
+					if(d.properties.JINKO=="0"){
+						return "#EEEEEE";
+					}
+					return "#CEF6CE";
+				})
+			})
+	});
+	</script>
+  </body>
+</html>

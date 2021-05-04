@@ -3,12 +3,13 @@
     <meta charset="utf8">
 	<title></title>
 	<meta charset="utf-8">
-	<script src="https://d3js.org/d3.v6.min.js"></script>
+	<!--d3.js v6を採用しようとしたが、IE11はv4しか対応していない-->
+	<script src="https://d3js.org/d3.v4.min.js"></script>
 	<style>
 		body { font-family: "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif; }
+		h1,h2,p { padding: 6px; text-align: center; }
 		svg { border:1px; background-color: white; text-align:left; }
 		path { fill:white; stroke:black; stroke-width:0.25; }
-		h1,h2,p { padding: 6px; text-align: center; }
 		.tooltip { 
 			position:absolute;
 			pointer-events: none;
@@ -57,14 +58,14 @@
 	//トップページからクリックで引き継いだ区名をidタグkunameに表示する処理
 	document.getElementById("kuname").innerHTML = ku + "　町丁目マップ";
 	//
-	//-----第２段階　csvとgeojsonを読み込む
+	//-----第２段階　町丁目ごとにデータを格納したCSV読み込み
 	//変数初期化
 	var csvfile = file + ".csv";  //町丁目ごとのデータを記録したCSVファイル
 	var geojsonfile = file + ".geojson";  //eStatから取得した境界データshpをQJISでgeojsonに変換したファイル
 	var fontSize = "20px";
 	var csvdata = [];  //CSV格納先
 	//CSV読み込み
-	d3.csv(csvfile).then(function(data){
+	d3.csv(csvfile, function(data){
 		//行ごとにcsvdataに格納していく
 		data.forEach(function(element){
 			//console.log(element);
@@ -72,7 +73,7 @@
 		});
 	});
 	//
-	//------第３段階　町丁目を描画する
+	//------第３段階　町丁目境界データgeojsonを読み込み描画する
 	//描画エリア設定
 	var width  = window.innerWidth;
 	var height = window.innerHeight;
@@ -86,7 +87,7 @@
 	var tooltip5 = d3.select("body").append("div").attr("class", "tooltip");
 	var infowindow = d3.select("body").append("rect").attr("class", "infowindow");
 	//geojson読み込み
-	d3.json(geojsonfile).then(function(json){
+	d3.json(geojsonfile, function(json){
 		//描画レスポンシブ対応 中心と移動も画面サイズで自動調整
 		var projection = d3.geoMercator()
 	    .fitExtent([[0, 0],[width, height-100]], json);
@@ -104,13 +105,13 @@
 				}
 				return "#CEF6CE";
 			})
-			.on('click', function(event,d){
+			.on('click', function(d){
 				//alert(Object.keys(csvdata[0]));
 				//alert(csvdata[0]["町丁目名"]);
 				//const result = csvdata.find((v) => v.町丁目名 === d.properties.S_NAME);
 				//alert(result.町丁目名);
 			})
-			.on('mouseover', function(event,d){
+			.on('mouseover', function(d){
 				d3.select(this)
 				.style("fill","pink");
 				//画面端になるとinfowindow内文字が見えなくなるのを防ぐ(画面半分超えると座標-200) 3項演算子
@@ -121,11 +122,13 @@
 				          .style("top",  (posY)+"px");
 				//町丁目名、情報をtooltipに表示
 				//マウスオーバーしているgeojsonの町丁目名と等しい町丁目名のレコードをcsvdataから検索する
-				//ES6の書き方だと以下だが、IE11では動かないのでその下の記述を採用（Babelで変換）
+				//ES6の書き方だと以下だが、IE11では動かないのでその下の記述を採用
+				//[0]が気色悪いが無いとundefinedになる
+				//(参考)https://zenn.dev/ituki/articles/27fbb0c4340cdab72d27
 				//const result = csvdata.find((v) => v.町丁目名 === d.properties.S_NAME);
-				var result = csvdata.find(function (v) {
+				var result = csvdata.filter(function (v) {
 					return v.町丁目名 === d.properties.S_NAME;
-				});
+				})[0];
 				var info1 = result.町丁目名;
 				var info2 = "人口:" + result.総数 + "人";
 				var info3 = "世帯:" + result.世帯数 + "世帯";

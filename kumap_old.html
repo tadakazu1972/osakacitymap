@@ -16,7 +16,7 @@
 			visibility: visible;
 			padding: 5px 12px 10px;
 			color : #666;
-			z-index:9998;
+			z-index:9999;
 		}
 		.infowindow { 
 			position:absolute;
@@ -30,14 +30,7 @@
 			box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
 			border-radius: 5px;
 			color : #666;
-			z-index:9997;
-		}
-		.bar { 
-			position:absolute;
-			pointer-events: none;
-			width: 2px;
-			background: magenta;
-			z-index:9999;
+			z-index:9998;
 		}
 	</style>
   </head>
@@ -96,11 +89,6 @@
 	var tooltip6 = d3.select("body").append("div").attr("class", "tooltip");
 	var tooltip7 = d3.select("body").append("div").attr("class", "tooltip");
 	var infowindow = d3.select("body").append("rect").attr("class", "infowindow");
-	//棒グラフ描画用（０歳～１００歳以上年齢別データ格納）
-	var barElements = [];
-	for (var i=0;i<101;i++){
-		barElements[i] = d3.select("body").append("rect").attr("class", "bar");
-	}
 	//geojson読み込み
 	d3.json(geojsonfile, function(json){
 		//描画レスポンシブ対応 中心と移動も画面サイズで自動調整
@@ -144,12 +132,6 @@
 				var result = csvdata.filter(function (v) {
 					return v.町丁目名 === d.properties.S_NAME;
 				})[0];
-				//後でindexでデータ指定したいため、あえて連想配列を配列に格納しなおす。
-				var result_array = [];
-				for (var key in result){
-					result_array.push(Number(result[key]));
-				}
-				//infowindow描画
 				var info1 = result.町丁目名;
 				var info2 = "人口:" + result.総数 + "人";
 				var info3 = "世帯:" + result.世帯数 + "世帯";
@@ -212,13 +194,6 @@
 				        .style("left", (posX)+"px")
 					    .style("top",  (posY+180)+"px")
 					    .text(info7);
-				//棒グラフ　描画
-				for (var i=7;i<108;i++){ //このiはresult_arrayのインデックス
-					//barElements[i-7]を忘れないように
-					barElements[i-7].style("left", (posX+i*3)+"px") //隙間をあけるため＊３
-					              .style("top", (posY - result_array[i]*2)+"px") //下向きに描画するため、topを上に移動させる
-					              .style("height", (result_array[i]*2)+"px");
-				}
 			})
 			.on('mouseout', function(d,i){
 				d3.select(this)

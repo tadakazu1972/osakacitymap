@@ -43,7 +43,7 @@
 			position:absolute;
 			pointer-events: none;
 			background: black;
-			text-align: center;
+			text-anchor: middle;
 			z-index:9999;
 		}
 		.label { position:absolute; pointer-events: none; font-size: 8px; color: black; }
@@ -154,8 +154,8 @@
 			.on('mouseover', function(d){
 				d3.select(this)
 				.style("fill","pink");
-				//画面端になるとinfowindow内文字が見えなくなるのを防ぐ(画面半分超えると座標-250) 3項演算子
-				var posX = event.pageX > innerWidth/2 ? event.pageX - 250 : event.pageX;
+				//画面端になるとinfowindow内文字が見えなくなるのを防ぐ(画面半分超えると座標-350) 3項演算子
+				var posX = event.pageX > innerWidth/2 ? event.pageX - 400 : event.pageX+50;
 				var posY = event.pageY > innerHeight/2 ? event.pageY - 250 : event.pageY;
 				//infowindowの下地と枠
 				infowindow.style("left", (posX)+"px")

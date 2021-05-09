@@ -22,7 +22,7 @@
 			position:absolute;
 			pointer-events: none;
 			padding: 5px 12px 10px;
-			width: 220px;
+			width: 300px;
 			height: 210px;
 			background: #fff;
 			-webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
@@ -39,6 +39,13 @@
 			background: magenta;
 			z-index:9999;
 		}
+		.axis {
+			position:absolute;
+			pointer-events: none;
+			background: black;
+			z-index:9999;
+		}
+		.label { position:absolute; pointer-events: none; font-size: 8px; color: black; }
 	</style>
   </head>
   <body>
@@ -86,7 +93,7 @@
 	var width  = window.innerWidth;
 	var height = window.innerHeight;
 	//svg
-	var svg=d3.select("body").append("svg").attr("width", width).attr("height", height);
+	var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
 	//町丁目名、時刻を表示するツールチップを設定（コメントアウト分はSVGは改行できない）
 	var tooltip1 = d3.select("body").append("div").attr("class", "tooltip");
 	var tooltip2 = d3.select("body").append("div").attr("class", "tooltip");
@@ -100,6 +107,14 @@
 	var barElements = [];
 	for (var i=0;i<101;i++){
 		barElements[i] = d3.select("body").append("rect").attr("class", "bar");
+	}
+	//X軸　描画用
+	var axisX = d3.select("body").append("rect").attr("class", "axis");
+	var axisY = d3.select("body").append("rect").attr("class", "axis");
+	var labelX = [];
+	var labelXtext = ["0","10","20","30","40","50","60","70","80","90","100","歳"]; //X軸ラベル
+	for (var i=0;i<12;i++){
+		labelX[i] = d3.select("body").append("div").attr("class", "label").text(labelXtext[i]);
 	}
 	//geojson読み込み
 	d3.json(geojsonfile, function(json){
@@ -182,7 +197,7 @@
 						   +Number(result["８５歳"])+Number(result["８６歳"])+Number(result["８７歳"])+Number(result["８８歳"])+Number(result["８９歳"])
 				           +Number(result["９０歳"])+Number(result["９１歳"])+Number(result["９２歳"])+Number(result["９３歳"])+Number(result["９４歳"])
 						   +Number(result["９５歳"])+Number(result["９６歳"])+Number(result["９７歳"])+Number(result["９８歳"])+Number(result["９９歳"])+Number(result["１００歳以上"]);
-				var info7 = "75~100歳以上:" + num4 + "人";
+				var info7 = "(75~100歳以上:" + num4 + "人)※重複";
 				tooltip1.style("font-weight", "bold")
 				        .style("font-size", fontSize)
 				        .style("left", (posX)+"px")
@@ -216,9 +231,24 @@
 				for (var i=7;i<108;i++){ //このiはresult_arrayのインデックス
 					//barElements[i-7]を忘れないように
 					barElements[i-7].style("left", (posX+i*3)+"px") //隙間をあけるため＊３
-					              .style("top", (posY - result_array[i]*2)+"px") //下向きに描画するため、topを上に移動させる
+					              .style("top", ((posY-20) - result_array[i]*2)+"px") //下向きに描画するため、topを上に移動させる
 					              .style("height", (result_array[i]*2)+"px");
 				}
+				//目盛り　描画
+				//X軸
+				axisX.style("left", (posX+18)+"px")
+					 .style("top", (posY-18)+"px")
+					 .style("width", "300px")
+					 .style("height", "2px");
+				//X軸ラベル　10歳きざみ年齢
+				for( var i=0;i<12;i++){
+					labelX[i].style("left", ((posX+18)+i*30)+"px")
+							 .style("top", ((posY-15)+"px"));
+				}
+				/*axisY.style("left", (posX+18)+"px")
+					 .style("top", (posY-200)+"px")
+					 .style("width", "2px")
+					 .style("height", "180px");*/
 			})
 			.on('mouseout', function(d,i){
 				d3.select(this)

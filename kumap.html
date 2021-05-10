@@ -10,7 +10,7 @@
 		h1,h2,p { padding: 6px; text-align: center; }
 		svg { border:1px; background-color: white; text-align:left; }
 		path { fill:white; stroke:black; stroke-width:0.25; }
-		.tooltip { 
+		.tooltip {
 			position:absolute;
 			pointer-events: none;
 			visibility: visible;
@@ -18,7 +18,7 @@
 			color : #666;
 			z-index:9998;
 		}
-		.infowindow { 
+		.infowindow {
 			position:absolute;
 			pointer-events: none;
 			padding: 5px 12px 10px;
@@ -32,7 +32,7 @@
 			color : #666;
 			z-index:9997;
 		}
-		.bar { 
+		.bar {
 			position:absolute;
 			pointer-events: none;
 			width: 2px;
@@ -51,8 +51,8 @@
   </head>
   <body>
 	<h1><div id="kuname"></div></h1>
-	<h2>町丁目をクリックするとデータが表示されます。</h2>
-	<p>(住民基本台帳人口　令和２年３月末日現在) 注:NaNは秘匿処理</p>
+	<h2>町丁目をクリックするとデータが表示されます</h2>
+	<p>出典　<a href="https://www.city.osaka.lg.jp/shimin/page/0000006893.html">住民基本台帳人口</a>　(注:NaNは秘匿処理)</p>
 	<script>
 	//
 	//-----第１段階　トップページでクリックした区の区名とcsv,geojsonのファイル名
@@ -156,19 +156,18 @@
 				.style("fill","pink");
 				//画面端になるとinfowindow内文字が見えなくなるのを防ぐ(画面半分超えると座標-350) 3項演算子
 				var posX = event.pageX > innerWidth/2 ? event.pageX - 400 : event.pageX+50;
-				var posY = event.pageY > innerHeight/2 ? event.pageY - 250 : event.pageY;
+				var posY = event.pageY > innerHeight/2 ? event.pageY - 50 : event.pageY;
 				//infowindowの下地と枠
 				infowindow.style("left", (posX)+"px")
 				          .style("top",  (posY)+"px");
 				//町丁目名、情報をtooltipに表示
 				//マウスオーバーしているgeojsonの町丁目名と等しい町丁目名のレコードをcsvdataから検索する
-				//ES6の書き方だと以下だが、IE11では動かないのでその下の記述を採用
-				//[0]が気色悪いが無いとundefinedになる
-				//(参考)https://zenn.dev/ituki/articles/27fbb0c4340cdab72d27
-				//const result = csvdata.find((v) => v.町丁目名 === d.properties.S_NAME);
+				//filterで町丁目名一致を返すと、男、女、計の３つ配列を返す
+				//よって、[2]として計を読み込む
 				var result = csvdata.filter(function (v) {
 					return v.町丁目名 === d.properties.S_NAME;
-				})[0];
+				})[2];
+				//console.log(result);
 				//後でindexでデータ指定したいため、あえて連想配列を配列に格納しなおす。
 				var result_array = [];
 				for (var key in result){
@@ -176,7 +175,7 @@
 				}
 				//infowindow描画
 				var info1 = result.町丁目名;
-				var info2 = "人口:" + result.総数 + "人";
+				var info2 = "人口:" + result.総数 + "人 (" + result.基準日 + "現在)";
 				var info3 = "世帯:" + result.世帯数 + "世帯";
 				var num1  = Number(result["０歳"])+Number(result["１歳"])+Number(result["２歳"])+Number(result["３歳"])+Number(result["４歳"])
 				           +Number(result["５歳"])+Number(result["６歳"])+Number(result["７歳"])+Number(result["８歳"])+Number(result["９歳"])
@@ -273,7 +272,7 @@
 				var p = Math.floor(max /10); //最大値を10で割り小数点除去、結果10きざみでラベル作成数確保
 				//10きざみラベル　可変
 				textY2 = [];
-				for(var i=0;i<p;i++){  
+				for(var i=0;i<p;i++){
 					textY2[i] = String((i+1)*10); //10からラベル表示するのでi+1に注意
 				}
 				//描画　単位、最大値は固定だが、残りラベルは等間隔なので２つと残りはY座標計算気をつける

@@ -15,7 +15,7 @@
 	<script>
 	  function draw(){
 		//変数初期化
-		var fontSize = "10pt";
+		var fontSize = "20px";
 		//描画エリア設定
 		var width  = window.innerWidth;
 		var height = window.innerHeight;
@@ -78,20 +78,13 @@
 			   .style("font-weight", "bold")
 			   .style("text-anchor", "middle")
 			   .attr("x", function(d){
-				   lonlat = [d.properties.lng, d.properties.lat];
-				   console.log(lonlat);
+				   lonlat = [d.properties.center_lon, d.properties.center_lat];
 				   xy = projection(lonlat);
-				   console.log(xy[0]);
-				   console.log(xy);
 				   return xy[0];
 				})
 				.attr("y", function(d){
-				   lonlat = [d.properties.lng, d.properties.lat];
-				   console.log(lonlat);
+				   lonlat = [d.properties.center_lon, d.properties.center_lat];
 				   xy = projection(lonlat);
-				   console.log(xy[0]);
-				   console.log(xy);
-				   console.log(xy[1])
 				   return xy[1];
 				})
 				.text(function(d){

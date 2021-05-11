@@ -15,7 +15,7 @@
 	<script>
 	  function draw(){
 		//変数初期化
-		var fontSize = "10pt";
+		var fontSize = "20px";
 		//描画エリア設定
 		var width  = window.innerWidth;
 		var height = window.innerHeight;
@@ -63,27 +63,33 @@
 						window.location.href="kumap.html?ku="+d.properties.N03_004+"&file="+d.properties.N03_001;
 					}
 			});
-		});
-		//CSV読み込み	
-		//区名表示ラベルCSV読み込み
-		d3.csv("ku_center.csv", function(data){
-			//読み込んだ行ごと（24区の緯度、経度、区名）に繰り返し処理
-			data.forEach(function(element){
-				//console.log(element); //ちゃんと読み込んでいるか確認用
-				//csvで設定した区名表示位置の緯度経度を上記で設定したprojecttionでsvg座標に変換
-				//projectionに食わせる際には緯度経度をまとめてxyとして食わせることに注意
-				var lonlat = [element.lon, element.lat];
-				var xy = projection(lonlat);
-				//console.log(xy); //ちゃんと変換されているか確認用
-				//区名　描画
-				svg.append("text")
-				.style("font-size", fontSize)
-				.style("font-weight", "bold")
-				.style("text-anchor", "middle")
-				.attr("x", xy[0])
-				.attr("y", xy[1])
-				.text(element.kuname);
-			})
+			//区名　描画
+			//projectionに食わせる際には緯度経度をまとめてxyとして食わせることに注意
+			//var lonlat = [element.lon, element.lat];
+			//var xy = projection(lonlat);
+			var lonlat;
+			var xy;
+			svg.append("g")
+			   .selectAll("text")
+			   .data(json.features)
+			   .enter()
+			   .append("text")
+			   .style("font-size", fontSize)
+			   .style("font-weight", "bold")
+			   .style("text-anchor", "middle")
+			   .attr("x", function(d){
+				   lonlat = [d.properties.center_lon, d.properties.center_lat];
+				   xy = projection(lonlat);
+				   return xy[0];
+				})
+				.attr("y", function(d){
+				   lonlat = [d.properties.center_lon, d.properties.center_lat];
+				   xy = projection(lonlat);
+				   return xy[1];
+				})
+				.text(function(d){
+					return d.properties.N03_004;
+				});
 		});
 	  }
 	</script>

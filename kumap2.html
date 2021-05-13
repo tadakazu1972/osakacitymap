@@ -22,8 +22,8 @@
 			position:absolute;
 			pointer-events: none;
 			padding: 5px 12px 10px;
-			width: 300px;
-			height: 210px;
+			width: 320px;
+			height: 250px;
 			background: #fff;
 			-webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
 			-moz-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
@@ -85,8 +85,8 @@
 			if (element.ku === ku){
 				data_a_url = element.data_a;
 				data_b_url = element.data_b;
-				console.log(data_a_url);
-				console.log(data_b_url);
+				//console.log(data_a_url); //確認
+				//console.log(data_b_url); //確認
 				//data_a CSV読み込み
 				d3.csv(data_a_url, function(data_a){
 					data_a.forEach(function(element_a){
@@ -94,7 +94,7 @@
 							csvdata_a.push(element_a);
 						}
 					})
-					console.log(csvdata_a); //確認
+					//console.log(csvdata_a); //確認
 				});
 				//data_b CSV読み込み
 				d3.csv(data_b_url, function(data_b){
@@ -103,7 +103,7 @@
 							csvdata_b.push(element_b);
 						}
 					})
-					console.log(csvdata_b); //確認
+					//console.log(csvdata_b); //確認
 				});
 			}
 		});
@@ -125,6 +125,7 @@
 	var tooltip5 = d3.select("body").append("div").attr("class", "tooltip");
 	var tooltip6 = d3.select("body").append("div").attr("class", "tooltip");
 	var tooltip7 = d3.select("body").append("div").attr("class", "tooltip");
+	var tooltip8 = d3.select("body").append("div").attr("class", "tooltip");
 	var infowindow = d3.select("body").append("rect").attr("class", "infowindow");
 	//棒グラフ描画用（０歳～１００歳以上年齢別データ格納）
 	var barElements_a = [];
@@ -191,28 +192,33 @@
 				var result_a = csvdata_a.filter(function (v) {
 					return v.町丁目名 === d.properties.S_NAME;
 				})[2];
-        var result_b = csvdata_b.filter(function (v) {
-          return v.町丁目名 === d.properties.S_NAME;
-        })[2];
+				var result_b = csvdata_b.filter(function (v) {
+					return v.町丁目名 === d.properties.S_NAME;
+				})[2];
 				//console.log(result_a);
 				//後でindexでデータ指定したいため、あえて連想配列を配列に格納しなおす。
 				var result_array_a = [];
-        var result_array_b = [];
+				var result_array_b = [];
 				for (var key in result_a){
 					result_array_a.push(Number(result_a[key]));
 				}
-        for (var key in result_b){
-          result_array_b.push(Number(result_b[key]));
-        }
+				for (var key in result_b){
+					result_array_b.push(Number(result_b[key]));
+				}
 				//infowindow描画
 				var info1 = result_b.町丁目名;
-				var info2 = "人口:" + result_a.総数 + "人 (" + result_a.基準日 + "現在)";
-				var info3 = "世帯:" + result_a.世帯数 + "世帯";
+				var info2 = "青:" + result_a.基準日 + "-> 赤:" + result_b.基準日;
+				var info3 = "人口:" + result_a.総数 + "人 -> " + result_b.総数 + "人";
+				var info4 = "世帯:" + result_a.世帯数 + "世帯 -> " + result_b.世帯数 + "世帯";
 				var num1  = Number(result_a["０歳"])+Number(result_a["１歳"])+Number(result_a["２歳"])+Number(result_a["３歳"])+Number(result_a["４歳"])
 				           +Number(result_a["５歳"])+Number(result_a["６歳"])+Number(result_a["７歳"])+Number(result_a["８歳"])+Number(result_a["９歳"])
 						   +Number(result_a["１０歳"])+Number(result_a["１１歳"])+Number(result_a["１２歳"])+Number(result_a["１３歳"])+Number(result_a["１４歳"])
 						   +Number(result_a["１５歳"])+Number(result_a["１６歳"])+Number(result_a["１７歳"]);
-				var info4 = " 0~17歳:" + num1 + "人";
+				var num1_b= Number(result_b["０歳"])+Number(result_b["１歳"])+Number(result_b["２歳"])+Number(result_b["３歳"])+Number(result_b["４歳"])
+				           +Number(result_b["５歳"])+Number(result_b["６歳"])+Number(result_b["７歳"])+Number(result_b["８歳"])+Number(result_b["９歳"])
+						   +Number(result_b["１０歳"])+Number(result_b["１１歳"])+Number(result_b["１２歳"])+Number(result_b["１３歳"])+Number(result_b["１４歳"])
+						   +Number(result_b["１５歳"])+Number(result_b["１６歳"])+Number(result_b["１７歳"]);
+				var info5 = " 0~17歳:" + num1 + "人 -> " + num1_b + "人";
 				var num2  = Number(result_a["１８歳"])+Number(result_a["１９歳"])
 				           +Number(result_a["２０歳"])+Number(result_a["２１歳"])+Number(result_a["２２歳"])+Number(result_a["２３歳"])+Number(result_a["２４歳"])
 				           +Number(result_a["２５歳"])+Number(result_a["２６歳"])+Number(result_a["２７歳"])+Number(result_a["２８歳"])+Number(result_a["２９歳"])
@@ -223,7 +229,17 @@
 						   +Number(result_a["５０歳"])+Number(result_a["５１歳"])+Number(result_a["５２歳"])+Number(result_a["５３歳"])+Number(result_a["５４歳"])
 						   +Number(result_a["５５歳"])+Number(result_a["５６歳"])+Number(result_a["５７歳"])+Number(result_a["５８歳"])+Number(result_a["５９歳"])
 						   +Number(result_a["６０歳"])+Number(result_a["６１歳"])+Number(result_a["６２歳"])+Number(result_a["６３歳"])+Number(result_a["６４歳"]);
-				var info5 = "18~64歳:" + num2 + "人";
+				var num2_b= Number(result_b["１８歳"])+Number(result_b["１９歳"])
+				           +Number(result_b["２０歳"])+Number(result_b["２１歳"])+Number(result_b["２２歳"])+Number(result_b["２３歳"])+Number(result_b["２４歳"])
+				           +Number(result_b["２５歳"])+Number(result_b["２６歳"])+Number(result_b["２７歳"])+Number(result_b["２８歳"])+Number(result_b["２９歳"])
+						   +Number(result_b["３０歳"])+Number(result_b["３１歳"])+Number(result_b["３２歳"])+Number(result_b["３３歳"])+Number(result_b["３４歳"])
+						   +Number(result_b["３５歳"])+Number(result_b["３６歳"])+Number(result_b["３７歳"])+Number(result_b["３８歳"])+Number(result_b["３９歳"])
+						   +Number(result_b["４０歳"])+Number(result_b["４１歳"])+Number(result_b["４２歳"])+Number(result_b["４３歳"])+Number(result_b["４４歳"])
+				           +Number(result_b["４５歳"])+Number(result_b["４６歳"])+Number(result_b["４７歳"])+Number(result_b["４８歳"])+Number(result_b["４９歳"])
+						   +Number(result_b["５０歳"])+Number(result_b["５１歳"])+Number(result_b["５２歳"])+Number(result_b["５３歳"])+Number(result_b["５４歳"])
+						   +Number(result_b["５５歳"])+Number(result_b["５６歳"])+Number(result_b["５７歳"])+Number(result_b["５８歳"])+Number(result_b["５９歳"])
+						   +Number(result_b["６０歳"])+Number(result_b["６１歳"])+Number(result_b["６２歳"])+Number(result_b["６３歳"])+Number(result_b["６４歳"]);
+				var info6 = "18~64歳:" + num2 + "人 -> " + num2_b + "人";
 				var num3  = Number(result_a["６５歳"])+Number(result_a["６６歳"])+Number(result_a["６７歳"])+Number(result_a["６８歳"])+Number(result_a["６９歳"])
 				           +Number(result_a["７０歳"])+Number(result_a["７１歳"])+Number(result_a["７２歳"])+Number(result_a["７３歳"])+Number(result_a["７４歳"])
 						   +Number(result_a["７５歳"])+Number(result_a["７６歳"])+Number(result_a["７７歳"])+Number(result_a["７８歳"])+Number(result_a["７９歳"])
@@ -231,13 +247,25 @@
 						   +Number(result_a["８５歳"])+Number(result_a["８６歳"])+Number(result_a["８７歳"])+Number(result_a["８８歳"])+Number(result_a["８９歳"])
 				           +Number(result_a["９０歳"])+Number(result_a["９１歳"])+Number(result_a["９２歳"])+Number(result_a["９３歳"])+Number(result_a["９４歳"])
 						   +Number(result_a["９５歳"])+Number(result_a["９６歳"])+Number(result_a["９７歳"])+Number(result_a["９８歳"])+Number(result_a["９９歳"])+Number(result_a["１００歳以上"]);
-				var info6 = "65~100歳以上:" + num3 + "人";
+				var num3_b= Number(result_b["６５歳"])+Number(result_b["６６歳"])+Number(result_b["６７歳"])+Number(result_b["６８歳"])+Number(result_b["６９歳"])
+				           +Number(result_b["７０歳"])+Number(result_b["７１歳"])+Number(result_b["７２歳"])+Number(result_b["７３歳"])+Number(result_b["７４歳"])
+						   +Number(result_b["７５歳"])+Number(result_b["７６歳"])+Number(result_b["７７歳"])+Number(result_b["７８歳"])+Number(result_b["７９歳"])
+						   +Number(result_b["８０歳"])+Number(result_b["８１歳"])+Number(result_b["８２歳"])+Number(result_b["８３歳"])+Number(result_b["８４歳"])
+						   +Number(result_b["８５歳"])+Number(result_b["８６歳"])+Number(result_b["８７歳"])+Number(result_b["８８歳"])+Number(result_b["８９歳"])
+				           +Number(result_b["９０歳"])+Number(result_b["９１歳"])+Number(result_b["９２歳"])+Number(result_b["９３歳"])+Number(result_b["９４歳"])
+						   +Number(result_b["９５歳"])+Number(result_b["９６歳"])+Number(result_b["９７歳"])+Number(result_b["９８歳"])+Number(result_b["９９歳"])+Number(result_b["１００歳以上"]);
+				var info7 = "65~100歳以上:" + num3 + "人 -> " + num3_b + "人";
 				var num4  = Number(result_a["７５歳"])+Number(result_a["７６歳"])+Number(result_a["７７歳"])+Number(result_a["７８歳"])+Number(result_a["７９歳"])
 						   +Number(result_a["８０歳"])+Number(result_a["８１歳"])+Number(result_a["８２歳"])+Number(result_a["８３歳"])+Number(result_a["８４歳"])
 						   +Number(result_a["８５歳"])+Number(result_a["８６歳"])+Number(result_a["８７歳"])+Number(result_a["８８歳"])+Number(result_a["８９歳"])
 				           +Number(result_a["９０歳"])+Number(result_a["９１歳"])+Number(result_a["９２歳"])+Number(result_a["９３歳"])+Number(result_a["９４歳"])
 						   +Number(result_a["９５歳"])+Number(result_a["９６歳"])+Number(result_a["９７歳"])+Number(result_a["９８歳"])+Number(result_a["９９歳"])+Number(result_a["１００歳以上"]);
-				var info7 = "(75~100歳以上:" + num4 + "人)※重複";
+				var num4_b= Number(result_b["７５歳"])+Number(result_b["７６歳"])+Number(result_b["７７歳"])+Number(result_b["７８歳"])+Number(result_b["７９歳"])
+						   +Number(result_b["８０歳"])+Number(result_b["８１歳"])+Number(result_b["８２歳"])+Number(result_b["８３歳"])+Number(result_b["８４歳"])
+						   +Number(result_b["８５歳"])+Number(result_b["８６歳"])+Number(result_b["８７歳"])+Number(result_b["８８歳"])+Number(result_b["８９歳"])
+				           +Number(result_b["９０歳"])+Number(result_b["９１歳"])+Number(result_b["９２歳"])+Number(result_b["９３歳"])+Number(result_b["９４歳"])
+						   +Number(result_b["９５歳"])+Number(result_b["９６歳"])+Number(result_b["９７歳"])+Number(result_b["９８歳"])+Number(result_b["９９歳"])+Number(result_b["１００歳以上"]);
+				var info8 = "(75~100歳以上:" + num4 + "人 -> " + num4_b + "人)";
 				tooltip1.style("font-weight", "bold")
 				        .style("font-size", fontSize)
 				        .style("left", (posX)+"px")
@@ -267,18 +295,25 @@
 				        .style("left", (posX)+"px")
 					    .style("top",  (posY+180)+"px")
 					    .text(info7);
+				tooltip8.style("font-size", fontSize)
+				        .style("left", (posX)+"px")
+					    .style("top",  (posY+210)+"px")
+					    .text(info8);
 				//棒グラフ　描画
 				var arr = []; //あとでY軸書くときに使う用
 				for (var i=7;i<108;i++){ //このiはresult_arrayのインデックス
 					//barElements[i-7]を忘れないように
+					//青　棒グラフ
 					barElements_a[i-7].style("left", (posX+i*3)+"px") //隙間をあけるため＊３
 					                  .style("top", ((posY-20) - result_array_a[i]*2)+"px") //下向きに描画するため、topを上に移動させる
 					                  .style("height", (result_array_a[i]*2)+"px")
-                            .style("background", "blue");
-          barElements_b[i-7].style("left", (posX+i*3)+"px")
-                            .style("top", ((posY-20) - result_array_b[i]*2)+"px")
-                            .style("height", (result_array_b[i]*2)+"px")
-                            .style("background", "magenta");
+					                  .style("background", "#006eff");
+					//赤　棒グラフ
+					barElements_b[i-7].style("left", (posX+i*3)+"px")
+									  .style("top", ((posY-20) - result_array_b[i]*2)+"px")
+									  .style("height", (result_array_b[i]*2)+"px")
+									  .style("background", "magenta")
+									  .style("opacity", "0.7");
 					//後でY軸書くときに使う
 					arr.push(result_array_b[i]);
 				}

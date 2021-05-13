@@ -36,7 +36,6 @@
 			position:absolute;
 			pointer-events: none;
 			width: 2px;
-			background: magenta;
 			z-index:9999;
 		}
 		.axis {
@@ -73,6 +72,8 @@
 	var file = decodeURIComponent(key["file"]);
 	//トップページからクリックで引き継いだ区名をidタグkunameに表示する処理
 	document.getElementById("kuname").innerHTML = ku + "　町丁目マップ";
+  //
+	//-----第２段階　町丁目ごとにデータを格納したCSV読み込み
 	//比較する２つのデータソースURLを記録したcsvを読み込む
 	var data_a_url;
 	var data_b_url;
@@ -108,22 +109,9 @@
 		});
 	});
 	//
-	//-----第２段階　町丁目ごとにデータを格納したCSV読み込み
-	//変数初期化
-	var csvfile = file + ".csv";  //町丁目ごとのデータを記録したCSVファイル
-	var geojsonfile = file + ".geojson";  //eStatから取得した境界データshpをQJISでgeojsonに変換したファイル
-	var fontSize = "20px";
-	var csvdata = [];  //CSV格納先
-	//CSV読み込み
-	d3.csv(csvfile, function(data){
-		//行ごとにcsvdataに格納していく
-		data.forEach(function(element){
-			//console.log(element);
-			csvdata.push(element);
-		});
-	});
-	//
 	//------第３段階　町丁目境界データgeojsonを読み込み描画する
+  var geojsonfile = file + ".geojson";  //eStatから取得した境界データshpをQJISでgeojsonに変換したファイル
+	var fontSize = "20px";
 	//描画エリア設定
 	var width  = window.innerWidth;
 	var height = window.innerHeight;
@@ -139,9 +127,11 @@
 	var tooltip7 = d3.select("body").append("div").attr("class", "tooltip");
 	var infowindow = d3.select("body").append("rect").attr("class", "infowindow");
 	//棒グラフ描画用（０歳～１００歳以上年齢別データ格納）
-	var barElements = [];
+	var barElements_a = [];
+  var barElements_b = [];
 	for (var i=0;i<101;i++){
-		barElements[i] = d3.select("body").append("rect").attr("class", "bar");
+		barElements_a[i] = d3.select("body").append("rect").attr("class", "bar");
+    barElements_b[i] = d3.select("body").append("rect").attr("class", "bar")
 	}
 	//X軸　描画用
 	var axisX = d3.select("body").append("rect").attr("class", "axis");
@@ -156,7 +146,7 @@
 	var textY = [];
 	labelY[0] = d3.select("body").append("div").attr("class", "label");
 	labelY[1] = d3.select("body").append("div").attr("class", "label");
-	//10-最大200(西区南堀江４丁目最大208人)まで20個のlabelY[2]-labelY[21]を用意しておく
+	//10-最大200(西区南堀江４丁目最大208人)まで20個のlabelY[2]-labelY[21]を用意しておく 都島区友渕１丁目は300だが、１箇所だけなので目をつむる
 	for (var i=2;i<22;i++){
 		labelY[i] = d3.select("body").append("rect").attr("class", "label");
 	}
@@ -182,8 +172,8 @@
 			.on('click', function(d){
 				//alert(Object.keys(csvdata[0]));
 				//alert(csvdata[0]["町丁目名"]);
-				//const result = csvdata.find((v) => v.町丁目名 === d.properties.S_NAME);
-				//alert(result.町丁目名);
+				//const result_a = csvdata.find((v) => v.町丁目名 === d.properties.S_NAME);
+				//alert(result_a.町丁目名);
 			})
 			.on('mouseover', function(d){
 				d3.select(this)
@@ -198,48 +188,55 @@
 				//マウスオーバーしているgeojsonの町丁目名と等しい町丁目名のレコードをcsvdataから検索する
 				//filterで町丁目名一致を返すと、男、女、計の３つ配列を返す
 				//よって、[2]として計を読み込む
-				var result = csvdata_a.filter(function (v) {
+				var result_a = csvdata_a.filter(function (v) {
 					return v.町丁目名 === d.properties.S_NAME;
 				})[2];
-				//console.log(result);
+        var result_b = csvdata_b.filter(function (v) {
+          return v.町丁目名 === d.properties.S_NAME;
+        })[2];
+				//console.log(result_a);
 				//後でindexでデータ指定したいため、あえて連想配列を配列に格納しなおす。
-				var result_array = [];
-				for (var key in result){
-					result_array.push(Number(result[key]));
+				var result_array_a = [];
+        var result_array_b = [];
+				for (var key in result_a){
+					result_array_a.push(Number(result_a[key]));
 				}
+        for (var key in result_b){
+          result_array_b.push(Number(result_b[key]));
+        }
 				//infowindow描画
-				var info1 = result.町丁目名;
-				var info2 = "人口:" + result.総数 + "人 (" + result.基準日 + "現在)";
-				var info3 = "世帯:" + result.世帯数 + "世帯";
-				var num1  = Number(result["０歳"])+Number(result["１歳"])+Number(result["２歳"])+Number(result["３歳"])+Number(result["４歳"])
-				           +Number(result["５歳"])+Number(result["６歳"])+Number(result["７歳"])+Number(result["８歳"])+Number(result["９歳"])
-						   +Number(result["１０歳"])+Number(result["１１歳"])+Number(result["１２歳"])+Number(result["１３歳"])+Number(result["１４歳"])
-						   +Number(result["１５歳"])+Number(result["１６歳"])+Number(result["１７歳"]);
+				var info1 = result_b.町丁目名;
+				var info2 = "人口:" + result_a.総数 + "人 (" + result_a.基準日 + "現在)";
+				var info3 = "世帯:" + result_a.世帯数 + "世帯";
+				var num1  = Number(result_a["０歳"])+Number(result_a["１歳"])+Number(result_a["２歳"])+Number(result_a["３歳"])+Number(result_a["４歳"])
+				           +Number(result_a["５歳"])+Number(result_a["６歳"])+Number(result_a["７歳"])+Number(result_a["８歳"])+Number(result_a["９歳"])
+						   +Number(result_a["１０歳"])+Number(result_a["１１歳"])+Number(result_a["１２歳"])+Number(result_a["１３歳"])+Number(result_a["１４歳"])
+						   +Number(result_a["１５歳"])+Number(result_a["１６歳"])+Number(result_a["１７歳"]);
 				var info4 = " 0~17歳:" + num1 + "人";
-				var num2  = Number(result["１８歳"])+Number(result["１９歳"])
-				           +Number(result["２０歳"])+Number(result["２１歳"])+Number(result["２２歳"])+Number(result["２３歳"])+Number(result["２４歳"])
-				           +Number(result["２５歳"])+Number(result["２６歳"])+Number(result["２７歳"])+Number(result["２８歳"])+Number(result["２９歳"])
-						   +Number(result["３０歳"])+Number(result["３１歳"])+Number(result["３２歳"])+Number(result["３３歳"])+Number(result["３４歳"])
-						   +Number(result["３５歳"])+Number(result["３６歳"])+Number(result["３７歳"])+Number(result["３８歳"])+Number(result["３９歳"])
-						   +Number(result["４０歳"])+Number(result["４１歳"])+Number(result["４２歳"])+Number(result["４３歳"])+Number(result["４４歳"])
-				           +Number(result["４５歳"])+Number(result["４６歳"])+Number(result["４７歳"])+Number(result["４８歳"])+Number(result["４９歳"])
-						   +Number(result["５０歳"])+Number(result["５１歳"])+Number(result["５２歳"])+Number(result["５３歳"])+Number(result["５４歳"])
-						   +Number(result["５５歳"])+Number(result["５６歳"])+Number(result["５７歳"])+Number(result["５８歳"])+Number(result["５９歳"])
-						   +Number(result["６０歳"])+Number(result["６１歳"])+Number(result["６２歳"])+Number(result["６３歳"])+Number(result["６４歳"]);
+				var num2  = Number(result_a["１８歳"])+Number(result_a["１９歳"])
+				           +Number(result_a["２０歳"])+Number(result_a["２１歳"])+Number(result_a["２２歳"])+Number(result_a["２３歳"])+Number(result_a["２４歳"])
+				           +Number(result_a["２５歳"])+Number(result_a["２６歳"])+Number(result_a["２７歳"])+Number(result_a["２８歳"])+Number(result_a["２９歳"])
+						   +Number(result_a["３０歳"])+Number(result_a["３１歳"])+Number(result_a["３２歳"])+Number(result_a["３３歳"])+Number(result_a["３４歳"])
+						   +Number(result_a["３５歳"])+Number(result_a["３６歳"])+Number(result_a["３７歳"])+Number(result_a["３８歳"])+Number(result_a["３９歳"])
+						   +Number(result_a["４０歳"])+Number(result_a["４１歳"])+Number(result_a["４２歳"])+Number(result_a["４３歳"])+Number(result_a["４４歳"])
+				           +Number(result_a["４５歳"])+Number(result_a["４６歳"])+Number(result_a["４７歳"])+Number(result_a["４８歳"])+Number(result_a["４９歳"])
+						   +Number(result_a["５０歳"])+Number(result_a["５１歳"])+Number(result_a["５２歳"])+Number(result_a["５３歳"])+Number(result_a["５４歳"])
+						   +Number(result_a["５５歳"])+Number(result_a["５６歳"])+Number(result_a["５７歳"])+Number(result_a["５８歳"])+Number(result_a["５９歳"])
+						   +Number(result_a["６０歳"])+Number(result_a["６１歳"])+Number(result_a["６２歳"])+Number(result_a["６３歳"])+Number(result_a["６４歳"]);
 				var info5 = "18~64歳:" + num2 + "人";
-				var num3  = Number(result["６５歳"])+Number(result["６６歳"])+Number(result["６７歳"])+Number(result["６８歳"])+Number(result["６９歳"])
-				           +Number(result["７０歳"])+Number(result["７１歳"])+Number(result["７２歳"])+Number(result["７３歳"])+Number(result["７４歳"])
-						   +Number(result["７５歳"])+Number(result["７６歳"])+Number(result["７７歳"])+Number(result["７８歳"])+Number(result["７９歳"])
-						   +Number(result["８０歳"])+Number(result["８１歳"])+Number(result["８２歳"])+Number(result["８３歳"])+Number(result["８４歳"])
-						   +Number(result["８５歳"])+Number(result["８６歳"])+Number(result["８７歳"])+Number(result["８８歳"])+Number(result["８９歳"])
-				           +Number(result["９０歳"])+Number(result["９１歳"])+Number(result["９２歳"])+Number(result["９３歳"])+Number(result["９４歳"])
-						   +Number(result["９５歳"])+Number(result["９６歳"])+Number(result["９７歳"])+Number(result["９８歳"])+Number(result["９９歳"])+Number(result["１００歳以上"]);
+				var num3  = Number(result_a["６５歳"])+Number(result_a["６６歳"])+Number(result_a["６７歳"])+Number(result_a["６８歳"])+Number(result_a["６９歳"])
+				           +Number(result_a["７０歳"])+Number(result_a["７１歳"])+Number(result_a["７２歳"])+Number(result_a["７３歳"])+Number(result_a["７４歳"])
+						   +Number(result_a["７５歳"])+Number(result_a["７６歳"])+Number(result_a["７７歳"])+Number(result_a["７８歳"])+Number(result_a["７９歳"])
+						   +Number(result_a["８０歳"])+Number(result_a["８１歳"])+Number(result_a["８２歳"])+Number(result_a["８３歳"])+Number(result_a["８４歳"])
+						   +Number(result_a["８５歳"])+Number(result_a["８６歳"])+Number(result_a["８７歳"])+Number(result_a["８８歳"])+Number(result_a["８９歳"])
+				           +Number(result_a["９０歳"])+Number(result_a["９１歳"])+Number(result_a["９２歳"])+Number(result_a["９３歳"])+Number(result_a["９４歳"])
+						   +Number(result_a["９５歳"])+Number(result_a["９６歳"])+Number(result_a["９７歳"])+Number(result_a["９８歳"])+Number(result_a["９９歳"])+Number(result_a["１００歳以上"]);
 				var info6 = "65~100歳以上:" + num3 + "人";
-				var num4  = Number(result["７５歳"])+Number(result["７６歳"])+Number(result["７７歳"])+Number(result["７８歳"])+Number(result["７９歳"])
-						   +Number(result["８０歳"])+Number(result["８１歳"])+Number(result["８２歳"])+Number(result["８３歳"])+Number(result["８４歳"])
-						   +Number(result["８５歳"])+Number(result["８６歳"])+Number(result["８７歳"])+Number(result["８８歳"])+Number(result["８９歳"])
-				           +Number(result["９０歳"])+Number(result["９１歳"])+Number(result["９２歳"])+Number(result["９３歳"])+Number(result["９４歳"])
-						   +Number(result["９５歳"])+Number(result["９６歳"])+Number(result["９７歳"])+Number(result["９８歳"])+Number(result["９９歳"])+Number(result["１００歳以上"]);
+				var num4  = Number(result_a["７５歳"])+Number(result_a["７６歳"])+Number(result_a["７７歳"])+Number(result_a["７８歳"])+Number(result_a["７９歳"])
+						   +Number(result_a["８０歳"])+Number(result_a["８１歳"])+Number(result_a["８２歳"])+Number(result_a["８３歳"])+Number(result_a["８４歳"])
+						   +Number(result_a["８５歳"])+Number(result_a["８６歳"])+Number(result_a["８７歳"])+Number(result_a["８８歳"])+Number(result_a["８９歳"])
+				           +Number(result_a["９０歳"])+Number(result_a["９１歳"])+Number(result_a["９２歳"])+Number(result_a["９３歳"])+Number(result_a["９４歳"])
+						   +Number(result_a["９５歳"])+Number(result_a["９６歳"])+Number(result_a["９７歳"])+Number(result_a["９８歳"])+Number(result_a["９９歳"])+Number(result_a["１００歳以上"]);
 				var info7 = "(75~100歳以上:" + num4 + "人)※重複";
 				tooltip1.style("font-weight", "bold")
 				        .style("font-size", fontSize)
@@ -274,11 +271,16 @@
 				var arr = []; //あとでY軸書くときに使う用
 				for (var i=7;i<108;i++){ //このiはresult_arrayのインデックス
 					//barElements[i-7]を忘れないように
-					barElements[i-7].style("left", (posX+i*3)+"px") //隙間をあけるため＊３
-					              .style("top", ((posY-20) - result_array[i]*2)+"px") //下向きに描画するため、topを上に移動させる
-					              .style("height", (result_array[i]*2)+"px");
+					barElements_a[i-7].style("left", (posX+i*3)+"px") //隙間をあけるため＊３
+					                  .style("top", ((posY-20) - result_array_a[i]*2)+"px") //下向きに描画するため、topを上に移動させる
+					                  .style("height", (result_array_a[i]*2)+"px")
+                            .style("background", "blue");
+          barElements_b[i-7].style("left", (posX+i*3)+"px")
+                            .style("top", ((posY-20) - result_array_b[i]*2)+"px")
+                            .style("height", (result_array_b[i]*2)+"px")
+                            .style("background", "magenta");
 					//後でY軸書くときに使う
-					arr.push(result_array[i]);
+					arr.push(result_array_b[i]);
 				}
 				//目盛り　描画
 				//X軸

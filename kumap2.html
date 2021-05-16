@@ -46,6 +46,8 @@
 			z-index:9999;
 		}
 		.label { position:absolute; pointer-events: none; font-size: 8px; color: black; }
+		.check { font-size:x-large; position: fixed; top: 17%; right:7%; border: 2px solid red; }
+		.station { pointer-events: none; }
 	</style>
   </head>
   <body>
@@ -109,7 +111,6 @@
 			}
 		});
 	});
-	//
 	//------第３段階　町丁目境界データgeojsonを読み込み描画する
 	var geojsonfile = file + ".geojson";  //eStatから取得した境界データshpをQJISでgeojsonに変換したファイル
 	var fontSize = "20px";
@@ -118,6 +119,7 @@
 	var height = window.innerHeight;
 	//svg
 	var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
+	var projection;
 	//ウィンドウ
 	var infowindow = d3.select("body").append("rect").attr("class", "infowindow");
 	//町丁目名、注釈を表示するツールチップを設定（コメントアウト分はSVGは改行できない）
@@ -161,7 +163,7 @@
 	//geojson読み込み
 	d3.json(geojsonfile, function(json){
 		//描画レスポンシブ対応 中心と移動も画面サイズで自動調整
-		var projection = d3.geoMercator()
+		projection = d3.geoMercator()
 	    .fitExtent([[0, 0],[width, height-100]], json);
 		//path設定
 		var path = d3.geoPath(projection);
@@ -378,6 +380,59 @@
 				})
 			})
 	});
+	//駅名表示　ただし、読み込んだ当初はvisibility hiddenで隠している
+	//国土数値情報　鉄道をQGISを用いて大阪市でクリッピング
+	//geojson読み込み
+	var lonlat;
+	var xy;
+	d3.json("station_osakacity.geojson", function(json){
+		//path設定
+		var path = d3.geoPath(projection);
+		//描画
+		svg.append("g").selectAll("path")
+		    .data(json.features)
+			.enter()
+			.append("path")
+			.attr("class", "station")
+			.attr("visibility", "hidden")
+			.attr("d", path)
+			.style("stroke-width", "5")
+			.style("stroke", "blue");
+
+		svg.append("g").selectAll("text")
+		   .data(json.features)
+		   .enter()
+		   .append("text")
+		   .attr("class", "station")
+		   .attr("visibility", "hidden")
+			.style("font-size", "14px")
+			.style("text-anchor", "middle")
+			.attr("x", function(d){
+				lonlat = d.geometry.coordinates[0];
+				xy = projection(lonlat[0]);
+				return xy[0];
+			})
+			.attr("y", function(d){
+				lonlat = d.geometry.coordinates[0];
+				xy = projection(lonlat[0]);
+				return xy[1]-10;
+			})
+			.text(function(d){
+				return d.properties.駅名;
+			});
+	});
+	//チェックボックスのON/OFFに応じて、駅と駅名を表示ON/OFF
+	function drawStation(){
+		//チェックをはずしていたら駅名　消去
+		if(!document.checkbox.elements[0].checked){
+			svg.selectAll(".station").attr("visibility", "hidden");
+		} else {
+			svg.selectAll(".station").attr("visibility", "visible");
+		}
+	}
 	</script>
+	<form name="checkbox" class="check">
+		<label><input type="checkbox" onclick="drawStation()">鉄道駅　表示　</label>
+	</form>
   </body>
 </html>

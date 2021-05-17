@@ -160,11 +160,53 @@
 	for (var i=2;i<22;i++){
 		labelY[i] = d3.select("body").append("rect").attr("class", "label");
 	}
-	//geojson読み込み
+	//町丁目geojson読み込み
 	d3.json(geojsonfile, function(json){
 		//描画レスポンシブ対応 中心と移動も画面サイズで自動調整
 		projection = d3.geoMercator()
 	    .fitExtent([[0, 0],[width, height-100]], json);
+		//駅名表示　ただし、読み込んだ当初はvisibility hiddenで隠している
+		//国土数値情報　鉄道をQGISを用いて大阪市でクリッピング
+		//geojson読み込み　ロードを確実にするため、ここに書いている
+		var lonlat;
+		var xy;
+		d3.json("station_osakacity.geojson", function(json){
+			//path設定
+			var path = d3.geoPath(projection);
+			//描画
+			svg.append("g").selectAll("path")
+				.data(json.features)
+				.enter()
+				.append("path")
+				.attr("class", "station")
+				.attr("visibility", "hidden")
+				.attr("d", path)
+				.style("stroke-width", "5")
+				.style("stroke", "blue");
+
+			svg.append("g").selectAll("text")
+			.data(json.features)
+			.enter()
+			.append("text")
+			.attr("class", "station")
+			.attr("visibility", "hidden")
+				.style("font-size", "14px")
+				.style("text-anchor", "middle")
+				.attr("x", function(d){
+					lonlat = d.geometry.coordinates[0];
+					xy = projection(lonlat[0]);
+					return xy[0];
+				})
+				.attr("y", function(d){
+					lonlat = d.geometry.coordinates[0];
+					xy = projection(lonlat[0]);
+					return xy[1]-10;
+				})
+				.text(function(d){
+					return d.properties.駅名;
+				});
+		});
+		//町丁目　描画
 		//path設定
 		var path = d3.geoPath(projection);
 		//描画、マウス反応
@@ -379,47 +421,6 @@
 					return "#CEF6CE";
 				})
 			})
-	});
-	//駅名表示　ただし、読み込んだ当初はvisibility hiddenで隠している
-	//国土数値情報　鉄道をQGISを用いて大阪市でクリッピング
-	//geojson読み込み
-	var lonlat;
-	var xy;
-	d3.json("station_osakacity.geojson", function(json){
-		//path設定
-		var path = d3.geoPath(projection);
-		//描画
-		svg.append("g").selectAll("path")
-		    .data(json.features)
-			.enter()
-			.append("path")
-			.attr("class", "station")
-			.attr("visibility", "hidden")
-			.attr("d", path)
-			.style("stroke-width", "5")
-			.style("stroke", "blue");
-
-		svg.append("g").selectAll("text")
-		   .data(json.features)
-		   .enter()
-		   .append("text")
-		   .attr("class", "station")
-		   .attr("visibility", "hidden")
-			.style("font-size", "14px")
-			.style("text-anchor", "middle")
-			.attr("x", function(d){
-				lonlat = d.geometry.coordinates[0];
-				xy = projection(lonlat[0]);
-				return xy[0];
-			})
-			.attr("y", function(d){
-				lonlat = d.geometry.coordinates[0];
-				xy = projection(lonlat[0]);
-				return xy[1]-10;
-			})
-			.text(function(d){
-				return d.properties.駅名;
-			});
 	});
 	//チェックボックスのON/OFFに応じて、駅と駅名を表示ON/OFF
 	function drawStation(){

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="utf8">
+	<title></title>
+	<meta charset="utf-8">
+	<!--d3.js v6を採用しようとしたが、IE11はv4しか対応していない-->
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<style>
+		body { font-family: "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif; }
+		h1,h2,p { padding: 6px; text-align: center; }
+		svg { border:1px; background-color: white; text-align:left; }
+		path { fill:white; stroke:black; stroke-width:0.25; }
+		.tooltip {
+			position:absolute;
+			visibility: visible;
+			padding: 5px 12px 10px;
+			color : #666;
+			z-index:9998;
+		}
+		.infowindow {
+			position:absolute;
+			padding: 5px 12px 10px;
+			width: 300px;
+			height: 210px;
+			background: #fff;
+			-webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+			-moz-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+			box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+			border-radius: 5px;
+			color : #666;
+			z-index:9997;
+		}
+		.infowindow2 {
+			position:absolute;
+			padding: 5px 12px 10px;
+			width: 300px;
+			height: 210px;
+			background: #bbb;
+			-webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+			-moz-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+			box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+			border-radius: 5px;
+			color : #666;
+			z-index:9998;
+		}
+		.bar {
+			position:absolute;
+			pointer-events: none;
+			width: 2px;
+			background: magenta;
+			z-index:9999;
+		}
+		.axis {
+			position:absolute;
+			pointer-events: none;
+			background: black;
+			text-anchor: middle;
+			z-index:9999;
+		}
+		.label { position:absolute; pointer-events: none; font-size: 8px; color: black; }
+		.check { font-size:x-large; position: fixed; top: 17%; right:7%; border: 2px solid red; }
+		.station { pointer-events: none; }
+	</style>
+  </head>
+  <body>
+	<h1><div id="kuname"></div></h1>
+	<h2>町丁目をクリックするとデータが表示されます</h2>
+	<p>出典　<a href="https://www.city.osaka.lg.jp/shimin/page/0000006893.html">住民基本台帳人口</a>　(注:NaNは秘匿処理)</p>
+	<script>
+	//
+	//-----第１段階　トップページでクリックした区の区名とcsv,geojsonのファイル名
+	//区名、マップ中心表示のための緯度経度パラメーターを前ページから受け取り、パースする処理
+	var param = location.search; // アドレスの「?」以降の引数(パラメータ)を取得
+	param = param.substring(1); //先頭の?をカット
+	var pair = param.split("&"); //&で引数を分割
+	var temp = "";
+	var key = new Array();
+	for (var i=0;i<pair.length;i++){
+		temp = pair[i].split("="); //配列を=で分割
+		keyName = temp[0];
+		keyValue = temp[1];
+		//キーと値の連想配列を生成
+		key[keyName] = keyValue;
+	}
+	var ku = decodeURIComponent(key["ku"]);
+	var file = decodeURIComponent(key["file"]);
+	//トップページからクリックで引き継いだ区名をidタグkunameに表示する処理
+	document.getElementById("kuname").innerHTML = ku + "　町丁目マップ";
+	//
+	//-----第２段階　町丁目ごとにデータを格納したCSV読み込み
+	//変数初期化
+	//var csvfile = file + ".csv";  //町丁目ごとのデータを記録したCSVファイル
+	var csvfile = "test.csv";  //福島区だけ
+	var geojsonfile = file + ".geojson";  //eStatから取得した境界データshpをQJISでgeojsonに変換したファイル
+	var fontSize = "20px";
+	var csvdata = [];  //CSV格納先
+	//CSV読み込み
+	d3.csv(csvfile, function(data){
+		//行ごとにcsvdataに格納していく
+		data.forEach(function(element){
+			//console.log(element);
+			csvdata.push(element);
+		});
+	});
+	//
+	//------第３段階　町丁目境界データgeojsonを読み込み描画する
+	//描画エリア設定
+	var width  = window.innerWidth;
+	var height = window.innerHeight;
+	//svg
+	var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
+	var projection;
+	//町丁目名、時刻を表示するツールチップを設定（コメントアウト分はSVGは改行できない）
+	//とりあえず10個枠を用意しておく。街区レベルが最大10として。それ以上存在する場合は拡張すべし。
+	var tooltip = [];
+	var info = []; //tooltipに表示する文字列格納用変数
+	for (var i=0;i<10;i++){
+		tooltip[i] = d3.select("body").append("div").attr("class", "tooltip");
+		info[i] = "";
+	}
+	//infowindow設定
+	var infowindow = d3.select("body").append("rect").attr("class", "infowindow");
+	var infowindow2 = d3.select("body").append("rect").attr("class", "infowindow2");
+	//棒グラフ描画用（０歳～１００歳以上年齢別データ格納）
+	var barElements = [];
+	for (var i=0;i<101;i++){
+		barElements[i] = d3.select("body").append("rect").attr("class", "bar");
+	}
+	//X軸　描画用
+	var axisX = d3.select("body").append("rect").attr("class", "axis");
+	var labelX = [];
+	var textX = ["0","10","20","30","40","50","60","70","80","90","100","歳"]; //X軸ラベル
+	for (var i in textX){
+		labelX[i] = d3.select("body").append("div").attr("class", "label").text(textX[i]);
+	}
+	//Y軸　描画用
+	var axisY = d3.select("body").append("rect").attr("class", "axis");
+	var labelY = [];
+	var textY = [];
+	labelY[0] = d3.select("body").append("div").attr("class", "label");
+	labelY[1] = d3.select("body").append("div").attr("class", "label");
+	//10-最大200(西区南堀江４丁目最大208人)まで20個のlabelY[2]-labelY[21]を用意しておく
+	for (var i=2;i<22;i++){
+		labelY[i] = d3.select("body").append("rect").attr("class", "label");
+	}
+	//町丁目geojson読み込み
+	d3.json(geojsonfile, function(json){
+		//描画レスポンシブ対応 中心と移動も画面サイズで自動調整
+		projection = d3.geoMercator()
+	    .fitExtent([[0, 0],[width, height-100]], json);
+		//駅名表示　ただし、読み込んだ当初はvisibility hiddenで隠している
+		//国土数値情報　鉄道をQGISを用いて大阪市でクリッピング
+		//geojson読み込み　ロードを確実にするため、ここに書いている
+		var lonlat;
+		var xy;
+		d3.json("station_osakacity.geojson", function(json){
+			//path設定
+			var path = d3.geoPath(projection);
+			//駅　描画
+			svg.append("g").selectAll("path")
+				.data(json.features)
+				.enter()
+				.append("path")
+				.attr("class", "station")
+				.attr("visibility", "hidden")
+				.attr("d", path)
+				.style("stroke-width", "5")
+				.style("stroke", "blue");
+			//駅名　描画
+			svg.append("g").selectAll("text")
+				.data(json.features)
+				.enter()
+				.append("text")
+				.attr("class", "station")
+				.attr("visibility", "hidden")
+				.style("font-size", "14px")
+				.style("text-anchor", "middle")
+				.attr("x", function(d){
+					lonlat = d.geometry.coordinates[0];
+					xy = projection(lonlat[0]);
+					return xy[0];
+				})
+				.attr("y", function(d){
+					lonlat = d.geometry.coordinates[0];
+					xy = projection(lonlat[0]);
+					return xy[1]-10;
+				})
+				.text(function(d){
+					return d.properties.駅名;
+				});
+		});
+		//町丁目　描画
+		//path設定
+		var path = d3.geoPath(projection);
+		//描画、マウス反応
+		svg.append("g").selectAll("path")
+		    .data(json.features)
+			.enter()
+			.append("path")
+			.attr("d", path)
+			.style("fill", function(d,i){
+				if(d.properties.JINKO=="0"){
+					return "#EEEEEE";
+				}
+				return "#CEF6CE";
+			})
+			.on('click', function(d){
+				//alert(Object.keys(csvdata[0]));
+				//alert(csvdata[0]["町丁目名"]);
+				//const result = csvdata.find((v) => v.町丁目名 === d.properties.S_NAME);
+				//alert(result.町丁目名);
+			})
+			.on('mouseover', function(d){
+				d3.select(this)
+				.style("fill","pink");
+				//画面端になるとinfowindow内文字が見えなくなるのを防ぐ(画面半分超えると座標-350) 3項演算子
+				var posX = event.pageX > innerWidth/2 ? event.pageX - 300 : event.pageX+50;
+				var posY = event.pageY > innerHeight/2 ? event.pageY - 50 : event.pageY;
+				//infowindowの下地と枠
+				infowindow.style("left", (posX)+"px")
+				          .style("top",  (posY)+"px");
+				//町丁目名、情報をtooltipに表示
+				//マウスオーバーしているgeojsonの町丁目名と等しい町丁目名のレコードをcsvdataから検索する
+				//filterで町丁目名一致を返すと、男、女、計の３つ配列を返す
+				//よって、[2]として計を読み込む
+				var result = csvdata.filter(function (v) {
+					return v.町名 === d.properties.S_NAME;
+				});
+				console.log(result);
+				var length = result.length;
+				console.log(length);
+				//行数が１行しか無い場合の処理
+				/*
+				//infowindowのpointer-events: none;
+				infowindow.style("pointer-events", "none");
+				*/
+				//infowindow描画
+				//街区があるときはinfowindowのpointer-eventsをオンにする
+				infowindow.style("pointer-events", "auto");
+				info[0] = result[0].町名; //とりあえずヒットした先頭の町名を選択
+				tooltip[0].style("font-weight", "bold")
+				        .style("font-size", fontSize)
+				        .style("left", (posX)+"px")
+					    .style("top",  (posY)+"px")
+					    .text(info[0]);
+				//街区 備考欄 描画
+				for (var i=0; i<length; i++){
+					info[i+1] = result[i].備考
+					tooltip[i+1].style("font-size", fontSize)
+				        .style("left", (posX)+"px")
+					    .style("top",  (posY+(i+1)*30)+"px")
+					    .text(info[i+1])
+						.on('mouseover', function(d){
+							d3.select(this).style("background", "#FF0");
+							//infowindowの下地と枠
+							infowindow2.style("opacity", "1")
+									   .style("left", (posX+100)+"px")
+							           .style("top",  (event.pageY+50)+"px");
+						})
+						.on('mouseout', function(d){
+							d3.select(this).style("background", "#FFF");
+							//infowindowの下地と枠
+							infowindow2.style("opacity", "0");
+						})
+				}
+				//tooltip[length]-[9]までが残像残るので、消す
+				for(var i=length;i<9;i++){
+					tooltip[i+1].text("").style("left", "0px").style("top", "0px");
+				}
+			})
+			.on('mouseout', function(d,i){
+				d3.select(this)
+				.style("fill", function(d,i){
+					if(d.properties.JINKO=="0"){
+						return "#EEEEEE";
+					}
+					return "#CEF6CE";
+				})
+			})
+	});
+	//チェックボックスのON/OFFに応じて、駅と駅名を表示ON/OFF
+	function drawStation(){
+		//チェックをはずしていたら駅名　消去
+		if(!document.checkbox.elements[0].checked){
+			svg.selectAll(".station").attr("visibility", "hidden");
+		} else {
+			svg.selectAll(".station").attr("visibility", "visible");
+		}
+	}
+	</script>
+	<form name="checkbox" class="check">
+		<label><input type="checkbox" onclick="drawStation()">鉄道駅　表示　</label>
+	</form>
+  </body>
+</html>

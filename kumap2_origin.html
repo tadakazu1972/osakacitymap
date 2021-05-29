@@ -48,7 +48,6 @@
 		.label { position:absolute; pointer-events: none; font-size: 8px; color: black; }
 		.check { font-size:x-large; position: fixed; top: 17%; right:7%; border: 2px solid red; }
 		.station { pointer-events: none; }
-		.river { pointer-events: none; } 
 	</style>
   </head>
   <body>
@@ -166,48 +165,6 @@
 		//描画レスポンシブ対応 中心と移動も画面サイズで自動調整
 		projection = d3.geoMercator()
 	    .fitExtent([[0, 0],[width, height-100]], json);
-		//河川表示　ただし、読み込んだ当初はvisibility hiddenで隠している
-		//国土数値情報　河川をQGISを用いて大阪市でクリッピング
-		//geojson読み込み　ロードを確実にするため、ここに書いている
-		var lonlat;
-		var xy;
-		d3.json("river_osakacity.geojson", function(json){
-			//path設定
-			var path = d3.geoPath(projection);
-			//描画
-			svg.append("g").selectAll("path")
-				.data(json.features)
-				.enter()
-				.append("path")
-				.attr("class", "river")
-				.attr("visibility", "visible")
-				.attr("d", path)
-				.style("fill", "none")　//デフォルトでfillが適用されて下図を邪魔するのでnone設定
-				.style("stroke-width", "5")
-				.style("stroke", "cyan");
-
-			svg.append("g").selectAll("text")
-			.data(json.features)
-			.enter()
-			.append("text")
-			.attr("class", "river")
-			.attr("visibility", "visible")
-				.style("font-size", "14px")
-				.style("text-anchor", "middle")
-				.attr("x", function(d){
-					lonlat = d.geometry.coordinates[0];
-					xy = projection(lonlat[0]);
-					return xy[0];
-				})
-				.attr("y", function(d){
-					lonlat = d.geometry.coordinates[0];
-					xy = projection(lonlat[0]);
-					return xy[1]-10;
-				})
-				.text(function(d){
-					return d.properties.W05_004;
-				});
-		});
 		//駅名表示　ただし、読み込んだ当初はvisibility hiddenで隠している
 		//国土数値情報　鉄道をQGISを用いて大阪市でクリッピング
 		//geojson読み込み　ロードを確実にするため、ここに書いている

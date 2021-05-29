@@ -17,6 +17,13 @@
 			color : #666;
 			z-index:9998;
 		}
+		.tooltip2 {
+			position:absolute;
+			visibility: visible;
+			padding: 5px 12px 10px;
+			color : #666;
+			z-index:9999;
+		}
 		.infowindow {
 			position:absolute;
 			padding: 5px 12px 10px;
@@ -33,9 +40,14 @@
 		.infowindow2 {
 			position:absolute;
 			padding: 5px 12px 10px;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			-webkit-transform: translate(-50%, -50%);
+			-ms-transform: translate(-50%, -50%);
 			width: 300px;
 			height: 210px;
-			background: #bbb;
+			background: #ffe;
 			-webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
 			-moz-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
 			box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
@@ -118,9 +130,19 @@
 		tooltip[i] = d3.select("body").append("div").attr("class", "tooltip");
 		info[i] = "";
 	}
+	//ごみ収集情報を表示するツールチップ設定
+	//こちらもとりあえず10個枠を用意しておく
+	var tooltip2 = [];
+	var info2 = [];
+	for (var i=0;i<10;i++){
+		tooltip2[i] = d3.select("body").append("div").attr("class", "tooltip2");
+		info2[i] = "";
+	}
+	//町丁目検索したデータ格納用配列（あとでforループの中で使うのでグローバル変数にしておく）
+	var result = [];
 	//infowindow設定
 	var infowindow = d3.select("body").append("rect").attr("class", "infowindow");
-	var infowindow2 = d3.select("body").append("rect").attr("class", "infowindow2");
+	var infowindow2 = d3.select("body").append("rect").attr("class", "infowindow2").style("opacity", "0");
 	//棒グラフ描画用（０歳～１００歳以上年齢別データ格納）
 	var barElements = [];
 	for (var i=0;i<101;i++){
@@ -223,7 +245,7 @@
 				//マウスオーバーしているgeojsonの町丁目名と等しい町丁目名のレコードをcsvdataから検索する
 				//filterで町丁目名一致を返すと、男、女、計の３つ配列を返す
 				//よって、[2]として計を読み込む
-				var result = csvdata.filter(function (v) {
+				result = csvdata.filter(function (v) {
 					return v.町名 === d.properties.S_NAME;
 				});
 				console.log(result);
@@ -245,7 +267,8 @@
 					    .text(info[0]);
 				//街区 備考欄 描画
 				for (var i=0; i<length; i++){
-					info[i+1] = result[i].備考
+					info[i+1] = String(i) + ":" + result[i].備考;
+					info2[i] = result[i].普通ごみ_午前;
 					tooltip[i+1].style("font-size", fontSize)
 				        .style("left", (posX)+"px")
 					    .style("top",  (posY+(i+1)*30)+"px")
@@ -253,14 +276,26 @@
 						.on('mouseover', function(d){
 							d3.select(this).style("background", "#FF0");
 							//infowindowの下地と枠
-							infowindow2.style("opacity", "1")
+							/*infowindow2.style("opacity", "1")
 									   .style("left", (posX+100)+"px")
-							           .style("top",  (event.pageY+50)+"px");
+							           .style("top",  (event.pageY+50)+"px");*/
 						})
 						.on('mouseout', function(d){
 							d3.select(this).style("background", "#FFF");
 							//infowindowの下地と枠
-							infowindow2.style("opacity", "0");
+							//infowindow2.style("opacity", "0");
+						})
+						.on('click', function(d, j){
+							var str = d3.select(this).text();
+							console.log(str)
+							var index = Number(str.substr(0,1));
+							console.log(index)
+							infowindow2.style("opacity", "1");
+							tooltip2[0].style("font-size", fontSize)
+										.style("left", (posX)+"px")
+										.style("top", (posY)+"px")
+										.text(info2[index])
+							console.log(info2[index])
 						})
 				}
 				//tooltip[length]-[9]までが残像残るので、消す

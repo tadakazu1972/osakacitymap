@@ -18,8 +18,8 @@
 			z-index:9998;
 		}
 		.tooltip2 {
+			pointer-events: none;
 			position:absolute;
-			visibility: visible;
 			padding: 5px 12px 10px;
 			color : #666;
 			z-index:9999;
@@ -40,20 +40,28 @@
 		.infowindow2 {
 			position:absolute;
 			padding: 5px 12px 10px;
-			top: 50%;
+			top: 220px;
 			left: 50%;
-			transform: translate(-50%, -50%);
-			-webkit-transform: translate(-50%, -50%);
-			-ms-transform: translate(-50%, -50%);
+			transform: translate(-50%, 0%);
+			-webkit-transform: translate(-50%, 0%);
+			-ms-transform: translate(-50%, 0%);
 			width: 300px;
-			height: 210px;
+			height: 440px;
 			background: #ffe;
 			-webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
 			-moz-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
 			box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
-			border-radius: 5px;
+			border-radius: 8px;
 			color : #666;
 			z-index:9998;
+		}
+		.button {
+			position: absolute;
+			padding: 5px 12px 10px;
+			background: blue;
+			color: white;
+			border-radius: 5px;
+			z-index:9999;
 		}
 		.bar {
 			position:absolute;
@@ -76,8 +84,8 @@
   </head>
   <body>
 	<h1><div id="kuname"></div></h1>
-	<h2>町丁目をクリックするとデータが表示されます</h2>
-	<p>出典　<a href="https://www.city.osaka.lg.jp/shimin/page/0000006893.html">住民基本台帳人口</a>　(注:NaNは秘匿処理)</p>
+	<h2>町丁目をクリックするとごみ収集曜日が表示されます</h2>
+	<p>大阪市ホームページ　<a href="https://www.city.osaka.lg.jp/kankyo/page/0000370521.html">ごみの収集曜日一覧</a>
 	<script>
 	//
 	//-----第１段階　トップページでクリックした区の区名とcsv,geojsonのファイル名
@@ -119,6 +127,8 @@
 	//描画エリア設定
 	var width  = window.innerWidth;
 	var height = window.innerHeight;
+	var centerX = width / 2;
+	var centerY = height /2;
 	//svg
 	var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
 	var projection;
@@ -131,12 +141,26 @@
 		info[i] = "";
 	}
 	//ごみ収集情報を表示するツールチップ設定
-	//こちらもとりあえず10個枠を用意しておく
+	//普通ごみ_午前～ﾍﾟｯﾄﾎﾞﾄﾙｺﾐｭﾆﾃｨと閉じるボタンまで12個枠を用意しておく
 	var tooltip2 = [];
 	var info2 = [];
-	for (var i=0;i<10;i++){
+	for (var i=0;i<13;i++){
 		tooltip2[i] = d3.select("body").append("div").attr("class", "tooltip2");
-		info2[i] = "";
+	}
+	//info2でcsvから読み込んだごみ収集データを格納するクラス定義
+	function infoData(_town, _gaiku, _normalAM, _normalPM, _resAM, _resPM, _plaAM, _plaPM, _paperAM, _paperPM, _paperCOM, _petCOM){
+		this.town = _town;
+		this.gaiku = _gaiku;
+		this.normalAM = _normalAM;
+		this.normalPM = _normalPM;
+		this.resAM = _resAM;
+		this.resPM = _resPM;
+		this.plaAM = _plaAM;
+		this.plaPM = _plaPM;
+		this.paperAM = _paperAM;
+		this.paperPM = _paperPM;
+		this.paperCOM = _paperCOM;
+		this.petCOM = _petCOM;
 	}
 	//町丁目検索したデータ格納用配列（あとでforループの中で使うのでグローバル変数にしておく）
 	var result = [];
@@ -236,7 +260,7 @@
 				d3.select(this)
 				.style("fill","pink");
 				//画面端になるとinfowindow内文字が見えなくなるのを防ぐ(画面半分超えると座標-350) 3項演算子
-				var posX = event.pageX > innerWidth/2 ? event.pageX - 300 : event.pageX+50;
+				var posX = event.pageX > innerWidth/2 ? event.pageX - 300 : event.pageX+20;
 				var posY = event.pageY > innerHeight/2 ? event.pageY - 50 : event.pageY;
 				//infowindowの下地と枠
 				infowindow.style("left", (posX)+"px")
@@ -248,9 +272,9 @@
 				result = csvdata.filter(function (v) {
 					return v.町名 === d.properties.S_NAME;
 				});
-				console.log(result);
+				//console.log(result);
 				var length = result.length;
-				console.log(length);
+				//console.log(length);
 				//行数が１行しか無い場合の処理
 				/*
 				//infowindowのpointer-events: none;
@@ -267,11 +291,12 @@
 					    .text(info[0]);
 				//街区 備考欄 描画
 				for (var i=0; i<length; i++){
-					info[i+1] = String(i) + ":" + result[i].備考;
-					info2[i] = result[i].普通ごみ_午前;
+					info[i+1]	= result[i].備考;
+					info2[i] = new infoData(result[i].町名, result[i].備考, result[i].普通ごみ_午前, result[i].普通ごみ_午後, result[i].資源ごみ_午前, result[i].資源ごみ_午後, result[i].容器包装プラスチック_午前, result[i].容器包装プラスチック_午後, result[i].古紙衣類_午前, result[i].古紙衣類_午後, result[i].古紙衣類_コミュニティ回収実施地域, result[i].ペットボトル_コミュニティ回収実施地域)
 					tooltip[i+1].style("font-size", fontSize)
 				        .style("left", (posX)+"px")
 					    .style("top",  (posY+(i+1)*30)+"px")
+						.datum(i) //tooltipにインデックスをデータとしてバインディング。後でクリックしたときに配列result判別用
 					    .text(info[i+1])
 						.on('mouseover', function(d){
 							d3.select(this).style("background", "#FF0");
@@ -285,17 +310,93 @@
 							//infowindowの下地と枠
 							//infowindow2.style("opacity", "0");
 						})
-						.on('click', function(d, j){
-							var str = d3.select(this).text();
-							console.log(str)
-							var index = Number(str.substr(0,1));
-							console.log(index)
+						.on('click', function(d){
+							//infowindow2ポインターイベント復活
+							d3.selectAll(".infowindow2").style("pointer-events", "auto");
+							//透明度100%
+							d3.selectAll(".tooltip2").style("opacity", "1")
+							//ボタン復活
+							d3.selectAll(".button").style("pointer-events", "auto").style("opacity", "1")
+							//自身にバインドされたインデックスを取り出してinfo2のインデックスとして使う
+							var index = d3.select(this).datum();
 							infowindow2.style("opacity", "1");
+							//町名
 							tooltip2[0].style("font-size", fontSize)
-										.style("left", (posX)+"px")
-										.style("top", (posY)+"px")
-										.text(info2[index])
-							console.log(info2[index])
+										.style("font-weight", "bold")
+										.style("left", (centerX-160)+"px")
+										.style("top", "224px")
+										.text(info2[index].town)
+							//街区名
+							tooltip2[1].style("font-size", fontSize)
+										.style("font-weight", "bold")
+										.style("left", (centerX-160)+"px")
+										.style("top", "256px")
+										.text(info2[index].gaiku)
+							//普通ごみ_午前
+							tooltip2[2].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "288px")
+										.text("普通ごみ(午前)：" + info2[index].normalAM)
+							//普通ごみ_午後
+							tooltip2[3].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "320px")
+										.text("普通ごみ(午後)：" + info2[index].normalPM)
+							//資源ごみ_午前
+							tooltip2[4].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "352px")
+										.text("資源ごみ(午前)：" + info2[index].resAM)
+							//資源ごみ_午後
+							tooltip2[5].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "384px")
+										.text("資源ごみ(午後)：" + info2[index].resPM)
+							//容包プラ_午前
+							tooltip2[6].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "416px")
+										.text("容包プラ(午前)：" + info2[index].plaAM)
+							//容包プラ_午後
+							tooltip2[7].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "448px")
+										.text("容包プラ(午後)：" + info2[index].plaPM)
+							//古紙衣類_午前
+							tooltip2[8].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "480px")
+										.text("古紙衣類(午前)：" + info2[index].paperAM)
+							//古紙衣類_午後
+							tooltip2[9].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "512px")
+										.text("古紙衣類(午後)：" + info2[index].paperPM)
+							//古紙衣類_コミュニティ
+							tooltip2[10].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "544px")
+										.text("古紙衣類(ｺﾐｭﾆﾃｨ)：" + info2[index].paperCOM)
+							//ペットボトル_コミュニティ
+							tooltip2[11].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "576px")
+										.text("ﾍﾟｯﾄﾎﾞﾄﾙ(ｺﾐｭﾆﾃｨ)：" + info2[index].petCOM)
+							//閉じるボタン
+							tooltip2[12].attr("class", "button")
+										.style("font-size", fontSize)
+										.style("font-weight", "bold")
+										.style("left", (centerX-70)+"px")
+										.style("top", "618px")
+										.text("閉じる")
+										.on('click', function(){
+											d3.selectAll(".tooltip2").style("opacity", "0")
+											d3.selectAll(".infowindow2")
+											  .style("pointer-events", "none")
+											  .style("opacity", "0")
+											d3.select(this).style("opacity", "0")
+											  .style("pointer-events", "none")
+										})
 						})
 				}
 				//tooltip[length]-[9]までが残像残るので、消す
@@ -313,6 +414,7 @@
 				})
 			})
 	});
+
 	//チェックボックスのON/OFFに応じて、駅と駅名を表示ON/OFF
 	function drawStation(){
 		//チェックをはずしていたら駅名　消去

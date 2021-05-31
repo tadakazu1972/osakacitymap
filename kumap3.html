@@ -1,14 +1,17 @@
 <!DOCTYPE html>
   <head>
     <meta charset="utf8">
+	<meta name="viewport" content="width=device-width,initial-scale=1.0, user-scalable=no" />
 	<title></title>
 	<meta charset="utf-8">
 	<!--d3.js v6を採用しようとしたが、IE11はv4しか対応していない-->
 	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<!--jQueryライブラリ読み込み-->
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 	<style>
 		body { font-family: "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif; }
 		h1,h2,p { padding: 6px; text-align: center; }
-		svg { border:1px; background-color: white; text-align:left; }
+		svg { position:fixed; left:30%; border:1px; background-color: white; text-align:left; }
 		path { fill:white; stroke:black; stroke-width:0.25; }
 		.tooltip {
 			position:absolute;
@@ -39,7 +42,7 @@
 		}
 		.infowindow2 {
 			position:absolute;
-      pointer-events: none;
+	      	pointer-events: none;
 			padding: 5px 12px 10px;
 			top: 220px;
 			left: 50%;
@@ -67,12 +70,153 @@
 		.label { position:absolute; pointer-events: none; font-size: 8px; color: black; }
 		.check { font-size:x-large; position: fixed; top: 17%; right:7%; border: 2px solid red; }
 		.station { pointer-events: none; }
+		/* アコーディオン */
+		ul {
+			list-style: none;
+		}
+		.summary {
+			background: #fff;
+		}
+		.accordion {
+			font-size: small;
+		}
+		.accordion > li {
+			margin: 0 0 4px 0;
+			padding: 2px 2px;
+			border-radius: 5px;
+			background-color: #ededed;
+			background-position: bottom;
+			background-repeat: no-repeat;
+		}
+		.accordion > li:hover {
+			background-color: #ddd;
+		}
+		.accordion > li > {
+			font-weight: normal;
+		}
+		.accordion > li > a {
+			color: #5555ff;
+			border-bottom: 1px solid #eee;
+			padding-bottom: 1px;
+			background: linear-gradient(transparent 90%, #cbe111 100%);
+		}
+		.accordion > li .content {
+			display: none;
+		}
+		/* アコーディオンが開いたときのスタイル */
+		.accordion > li.expanded {
+			background-color: #ddd;
+		}
+		.accordion > li.expanded > h2 {
+			font-weight: bold;
+		}
+		.accordion > li.expanded > h2 {
+			margin: 10px 0 0 0;
+			padding: 10px 0 0 0;
+			border-top: solid 1px #fff;
+		}
+		.accordion > li.expanded > a {
+			color: #0000ff;
+		}
+		/*RESPONSIVE: スマートフォン ウィンドウ幅600px以下*/
+		@media screen and (max-width:600px) {
+			#map_container {
+				width:100%;
+				height:100%;
+				position:fixed;
+				top:0;
+				left:30%;
+			}
+
+			#map_canvas {
+				width: 70%;
+				height: 100%;
+			}
+
+			.radius {
+				padding: 8px;
+				font-size: 4.35vw;
+				position: fixed;
+				top: 12%;
+				right: 10px;
+				background: #fff;
+			}
+			/*iPhone5sで０歳〜５歳を１行におさめるには4.35vw*/
+			.checkbox {
+				padding: 8px;
+				font-size: 4.35vw;
+				position: fixed;
+				top: 12%;
+				left: 31%;
+				background: #fff;
+			}
+
+			.fixed {
+				position: fixed;
+				top:75%;
+				left:30%;
+				background: #fff;
+				font-size:5pt;
+			}
+			img {
+				width:16px;
+				height:16px;
+			}
+			.header {
+				display: none;
+			}
+			.summary {
+				display: none;
+			}
+			.accordion p {
+				font-size:10pt;
+			}
+			.accordion > li {
+				cursor: pointer;
+				margin: 0 0 5px 0;
+				padding: 25px 10px;
+				border-radius: 5px;
+				background-color: #ededed;
+				background-position: bottom center;
+				background-repeat: no-repeat;
+			}
+			.accordion > li:hover {
+				background-color: #ddd;
+			}
+			.accordion > li > h2 {
+				font-weight: normal;
+			}
+			.accordion > li .content {
+				display: none;
+			}
+			/* アコーディオンが開いたときのスタイル */
+			.accordion > li.expanded {
+				background-color: #ddd;
+			}
+			.accordion > li.expanded > h2 {
+				font-weight: bold;
+			}
+			.accordion > li.expanded > h2 {
+				margin: 10px 0 0 0;
+				padding: 10px 0 0 0;
+				border-top: solid 1px #fff;
+			}
+		}
 	</style>
   </head>
   <body>
 	<h1><div id="kuname"></div></h1>
 	<h2>町丁目をクリックするとごみ収集曜日が表示されます</h2>
 	<p>大阪市ホームページ　<a href="https://www.city.osaka.lg.jp/kankyo/page/0000370521.html">ごみの収集曜日一覧</a>
+	<div class="summary">
+		<p><div id="kuname2"></div></p>
+	</div>
+	<ul class="accordion" style="float:left; width:30%">
+		<div class="accordion"></div>
+	</ul>
+	<form name="checkbox" class="check">
+		<label><input type="checkbox" onclick="drawStation()">鉄道駅　表示　</label>
+	</form>
 	<script>
 	//
 	//-----第１段階　トップページでクリックした区の区名とcsv,geojsonのファイル名
@@ -93,6 +237,7 @@
 	var file = decodeURIComponent(key["file"]);
 	//トップページからクリックで引き継いだ区名をidタグkunameに表示する処理
 	document.getElementById("kuname").innerHTML = ku + "　町丁目マップ";
+	document.getElementById("kuname2").innerHTML = ku +"内のごみ収集情報です。";
 	//
 	//-----第２段階　町丁目ごとにデータを格納したCSV読み込み
 	//変数初期化
@@ -101,12 +246,26 @@
 	var geojsonfile = file + ".geojson";  //eStatから取得した境界データshpをQJISでgeojsonに変換したファイル
 	var fontSize = "20px";
 	var csvdata = [];  //CSV格納先
-	//CSV読み込み
+	//ごみ収集情報　CSV読み込み
 	d3.csv(csvfile, function(data){
 		//行ごとにcsvdataに格納していく
 		data.forEach(function(element){
-			//console.log(element);
+			console.log(element);
 			csvdata.push(element);
+			//アコーディオンに書き込み
+			var $name=$('<h2>'+element.町名+" "+element.備考+'</h2>');
+			var $normal=$('<div class="content">'+"普通ごみ:"+element.普通ごみ_午前+" "+element.普通ごみ_午後+'</div>');
+			var $res=$('<div class="content">'+"資源ごみ："+element.資源ごみ_午前+" "+element.資源ごみ_午後+'</div>');
+			var $pla=$('<div class="content">'+"容器包装プラ"+element.容器包装プラスチック_午前+" "+element.容器包装プラスチック_午後+'</div>');
+			var $paper=$('<div class="content">'+"古紙衣類"+element.古紙衣類_午前+" "+element.古紙衣類_午後+'</div>');
+			//以下、カテゴリーごとにアコーディオンに挿入
+			$('<li></li>')
+				.append($name)
+				.append($normal)
+				.append($res)
+				.append($pla)
+				.append($paper)
+				.appendTo('.accordion');
 		});
 	});
 	//
@@ -115,7 +274,7 @@
 	var width  = window.innerWidth;
 	var height = window.innerHeight;
 	var centerX = width / 2;
-	var centerY = height /2;
+	var centerY = height / 2;
 	//svg
 	var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
 	var projection;
@@ -154,28 +313,6 @@
 	//infowindow設定
 	var infowindow = d3.select("body").append("rect").attr("class", "infowindow");
 	var infowindow2 = d3.select("body").append("rect").attr("class", "infowindow2").style("opacity", "0");
-	//棒グラフ描画用（０歳～１００歳以上年齢別データ格納）
-	var barElements = [];
-	for (var i=0;i<101;i++){
-		barElements[i] = d3.select("body").append("rect").attr("class", "bar");
-	}
-	//X軸　描画用
-	var axisX = d3.select("body").append("rect").attr("class", "axis");
-	var labelX = [];
-	var textX = ["0","10","20","30","40","50","60","70","80","90","100","歳"]; //X軸ラベル
-	for (var i in textX){
-		labelX[i] = d3.select("body").append("div").attr("class", "label").text(textX[i]);
-	}
-	//Y軸　描画用
-	var axisY = d3.select("body").append("rect").attr("class", "axis");
-	var labelY = [];
-	var textY = [];
-	labelY[0] = d3.select("body").append("div").attr("class", "label");
-	labelY[1] = d3.select("body").append("div").attr("class", "label");
-	//10-最大200(西区南堀江４丁目最大208人)まで20個のlabelY[2]-labelY[21]を用意しておく
-	for (var i=2;i<22;i++){
-		labelY[i] = d3.select("body").append("rect").attr("class", "label");
-	}
 	//町丁目geojson読み込み
 	d3.json(geojsonfile, function(json){
 		//描画レスポンシブ対応 中心と移動も画面サイズで自動調整
@@ -280,6 +417,7 @@
 				for (var i=0; i<length; i++){
 					info[i+1]	= result[i].備考;
 					info2[i] = new infoData(result[i].町名, result[i].備考, result[i].普通ごみ_午前, result[i].普通ごみ_午後, result[i].資源ごみ_午前, result[i].資源ごみ_午後, result[i].容器包装プラスチック_午前, result[i].容器包装プラスチック_午後, result[i].古紙衣類_午前, result[i].古紙衣類_午後, result[i].古紙衣類_コミュニティ回収実施地域, result[i].ペットボトル_コミュニティ回収実施地域)
+					//tooltip　描画
 					tooltip[i+1].style("font-size", fontSize)
 				        .style("left", (posX)+"px")
 					    .style("top",  (posY+(i+1)*30)+"px")
@@ -411,9 +549,18 @@
 			svg.selectAll(".station").attr("visibility", "visible");
 		}
 	}
+	//町丁目　街区名をクリックすると表示するアコーディオン生成
+	$(function(){
+		$('.accordion')
+		.on('click', 'li', function(){
+			var $this = $(this);
+			//コンテンツを開く
+			$this
+			.toggleClass('expanded')
+			.children('.content')
+			.slideToggle('fast');
+		});
+	});
 	</script>
-	<form name="checkbox" class="check">
-		<label><input type="checkbox" onclick="drawStation()">鉄道駅　表示　</label>
-	</form>
   </body>
 </html>

@@ -1,0 +1,211 @@
+@charset "UTF-8";
+/* CSS Document */
+/* 基本設定クリア */
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, input, textarea, legend, article, aside, footer, header, hgroup, menu, nav, section {
+	border: 0;
+	color: #000;
+	font-size: 100%;
+	font: inherit;
+	margin: 0;
+	padding: 0;
+	vertical-align: baseline;
+}
+h1, h2, h3, h4, h5, h6 {
+	font-weight: bold;
+}
+
+ul {
+	list-style: none;
+}
+
+/* 基本のレイアウト */
+body {
+	height:100%;
+	background: #fff;
+	font-family: "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif;
+}
+
+#map_container {
+	width:100%;
+	height:100%;
+	position:fixed;
+	top:15;
+	left:30%;
+}
+
+#map_canvas {
+	width:70%;
+	height:95%;
+}
+
+.radius {
+	padding: 8px;
+	font-size: x-large;
+	position: fixed;
+	top: 12%;
+	right: 10px;
+	background: #fff;
+}
+
+.checkbox {
+	padding: 8px;
+	font-size: x-large;
+	position: fixed;
+	top: 12%;
+	left: 31%;
+	background: #fff;
+}
+
+.fixed {
+	position: fixed;
+	top: 82%;
+	left:30%;
+	background: #fff;
+}
+
+.header p{
+	background: #ffb6c1;
+	text-align: center;
+	color: #fff;
+}
+
+.summary {
+	background: #fff;
+}
+
+.accordion p {
+	font-size:xx-large;
+}
+
+/* accordion5 */
+.accordion5 > li {
+	margin: 0 0 5px 0;
+	padding: 2px 2px;
+	border-radius: 5px;
+	background-color: #ededed;
+	background-position: bottom center;
+	background-repeat: no-repeat;
+}
+.accordion5 > li:hover {
+	background-color: #ddd;
+}
+.accordion5 > li > h2 {
+	font-weight: normal;
+}
+.accordion5 > li > a {
+　	color: #5555ff;
+	border-bottom:1px solid #eee;
+	padding-bottom:1px;
+	background: linear-gradient(transparent 90%, #cbe111 100%);
+}
+.accordion5 > li .content {
+	display: none;
+}
+/* アコーディオンが開いたときのスタイル */
+.accordion5 > li.expanded {
+	background-color: #ddd;
+}
+.accordion5 > li.expanded > h2 {
+	font-weight: bold;
+}
+.accordion5 > li.expanded > h2 {
+	margin: 10px 0 0 0;
+	padding: 10px 0 0 0;
+	border-top: solid 1px #fff;
+}
+.accordion5 > li.expanded > a {
+	color: #0000ff;
+}
+
+/**
+ * RESPONSIVE: スマートフォン向けウィンドウ幅600px以下
+ */
+@media screen and (max-width:600px) {
+	.accordion > li {
+		cursor: pointer;
+		margin: 0 0 5px 0;
+		padding: 25px 10px;
+		border-radius: 5px;
+		background-color: #ededed;
+		background-position: bottom center;
+		background-repeat: no-repeat;
+	}
+	.accordion > li:hover {
+		background-color: #ddd;
+	}
+	.accordion > li > h2 {
+		font-weight: normal;
+	}
+	.accordion > li .content {
+		display: none;
+	}
+	/* アコーディオンが開いたときのスタイル */
+	.accordion > li.expanded {
+		background-color: #ddd;
+	}
+	.accordion > li.expanded > h2 {
+		font-weight: bold;
+	}
+	.accordion > li.expanded > h2 {
+		margin: 10px 0 0 0;
+		padding: 10px 0 0 0;
+		border-top: solid 1px #fff;
+	}
+}
+
+
+/*RESPONSIVE: スマートフォン ウィンドウ幅600px以下*/
+@media screen and (max-width:600px) {
+	#map_container {
+		width:100%;
+		height:100%;
+		position:fixed;
+		top:0;
+		left:30%;
+	}
+
+	#map_canvas {
+		width: 70%;
+		height: 100%;
+	}
+
+	.radius {
+		padding: 8px;
+		font-size: 4.35vw;
+		position: fixed;
+		top: 12%;
+		right: 10px;
+		background: #fff;
+	}
+
+  /*iPhone5sで０歳〜５歳を１行におさめるには4.35vw*/
+	.checkbox {
+		padding: 8px;
+		font-size: 4.35vw;
+		position: fixed;
+		top: 12%;
+		left: 31%;
+		background: #fff;
+	}
+
+	.fixed {
+		position: fixed;
+		top:75%;
+		left:30%;
+		background: #fff;
+		font-size:5pt;
+	}
+	img {
+		width:16px;
+		height:16px;
+	}
+	.header {
+		display: none;
+	}
+	.summary {
+		display: none;
+	}
+	.accordion p {
+		font-size:10pt;
+	}
+}

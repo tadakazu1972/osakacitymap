@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0, user-scalable=no" />
+<style type="text/css">
+	html { height: 100% }
+	body { height: 100%; margin: 0; padding: 0 }
+	#map_canvas { height: 100% }
+</style>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style2.css">
+<!--jQueryライブラリ読み込み-->
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<!--Googleマップ生成-->
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=****&region=JP&language=ja"></script>
+<script type="text/javascript">
+//スマホの時はレイアウト変更を判定するため
+var width = window.innerWidth;
+//マップオブジェクト設定
+var mapObj;
+//円オブジェクト設定
+var circle;
+var radius = 1000; //半径1km
+//マーカーイメージ保存用　グローバルに定義しないとあとのswitch文でたくさん必要になるため。
+var image;
+//マーカー保存用
+var markerArray3 = new Array(); //企業型
+//企業型クラス　グローバルオブジェクト化
+var company = new Array();
+//企業型クラス　コンストラクタ　定義
+function Company(_lat, _lng, _category, _zero, _one, _two, _three, _four, _five){
+  this.lat   = _lat;
+	this.lng   = _lng;
+	this.category = _category;
+	this.zero  = _zero;
+	this.one   = _one;
+	this.two   = _two;
+	this.three = _three;
+	this.four  = _four;
+	this.five  = _five;
+}
+
+//区役所名、マップ中心表示のための緯度経度パラメーターを前ページから受け取り、パースする処理
+var param = location.search; // アドレスの「?」以降の引数(パラメータ)を取得
+param = param.substring(1); //先頭の?をカット
+var pair = param.split("&"); //&で引数を分割
+var temp = "";
+var key = new Array();
+for (var i=0;i<pair.length;i++){
+  temp = pair[i].split("="); //配列を=で分割
+  keyName = temp[0];
+  keyValue = temp[1];
+  //キーと値の連想配列を生成
+  key[keyName] = keyValue;
+}
+var name = decodeURIComponent(key["name"]);
+var lat  = decodeURIComponent(key["lat"]);
+var lng  = decodeURIComponent(key["lng"]);
+
+//区役所を緯度・軽度の初期値に設定
+var kuname=name;
+var kuyakusyo=kuname+"役所";
+var posY=lat;
+var posX=lng;
+//左の園リストをクリックした際に、地図上に指し示すマーカーをグローバル変数で設定
+var marker2; //markerは園のアイコンに使用しているため、あえて2にしている
+var marker2posy = parseFloat(lat);;
+var marker2posx = parseFloat(lng);
+
+//マップ作成
+google.maps.event.addDomListener(window, 'load', function(){
+	//マップ初期設定
+	var map = document.getElementById("map_canvas");
+	var options = {
+		zoom: 15,
+		center: new google.maps.LatLng(posY, posX),
+		mapTypeId: google.maps.MapTypeId.ROADMAP
+	};
+	mapObj = new google.maps.Map(map, options);
+
+	//区役所を中心に設定
+	var pos = new google.maps.LatLng(posY, posX);
+	var infowindow = new google.maps.InfoWindow({ map: mapObj, position: pos, content: kuyakusyo});
+	mapObj.setCenter(pos);
+
+  //企業主導型csvファイル読込
+	loadCSV3("sukusukudata3.csv");
+});
+
+//企業主導型保育事業CSV読み込み処理
+function loadCSV3( filename ){
+	var xhr = new XMLHttpRequest();
+	xhr.onload = function(){
+		var tempArray = xhr.responseText.split("\n");
+		//バブルソート処理
+		csvArray2 = new Array();
+		csvArray3 = new Array();
+		tempArray2 = new Array();
+		var u,v;
+		for(u=0;u<tempArray.length-1;u++){
+			for(v=tempArray.length-1; v>u; v--){
+				//現時点のデータ取得
+				csvArray2 = tempArray[v].split(",");
+				var n1 = Number(csvArray2[19]);
+				//１つ前のデータ取得
+				csvArray3 = tempArray[v-1].split(",");
+				var n2 = Number(csvArray3[19]);
+				if ( n2 > n1 ) {
+					tempArray2 = tempArray[v];
+					tempArray[v] = tempArray[v-1];
+					tempArray[v-1] = tempArray2;
+				}
+			}
+		}
+		//ソート後の処理
+		csvArray = new Array();
+		for(var i=0;i<tempArray.length;i++){
+			csvArray[i] = tempArray[i].split(",");
+			var data = csvArray[i];
+			//マーカー作成　画像ファイルを読み込み
+			if (data[9]=="企業主導型保育事業") {
+				image = 'icon32x32e.png';
+			} else {
+				image = 'icon32x32.png';
+			}
+      //グローバル保存　[i]をhoikusyo[i]と合わせないとダメ
+			markerArray3[i] = new google.maps.Marker({
+				position: new google.maps.LatLng( parseFloat(data[0]), parseFloat(data[1]) ),
+				map: mapObj,
+				icon: image,
+				title: data[2]
+			});
+			//企業主導型保育事業の場合は、○月○日と日もcsvファイルを読み込む必要があるため、attachMessage2を呼び出す
+			if (data[9]=="企業主導型保育事業") {
+				//csvファイル　保育所名:data[2] 住所:data[4] 電話:data[7] URL:data[8] 0歳:data[10] 1歳:data[11] 2歳:data[12] 3歳:data[13] 4歳:data[14] 5歳:data[15] 現在月:data[16] 利用可能月:data[20] 区:data[6] 経度:data[0] 緯度:data[1] カテゴリー:data[9] 調査日:data[17]
+				attachMessage2(markerArray3[i], data[2], data[4], data[7], data[8], data[10], data[11], data[12], data[13], data[14], data[15], data[16], data[20], data[6], data[0], data[1], data[9], data[17]);
+			}
+			//読み込んだデータをcompanyクラスに格納
+			//前処理として0歳〜5歳データが[-,ー]の場合0にする。「0歳児か5歳児で3名」はそのままイキ。
+			var regexp = new RegExp(/[-－]/);
+			for (var j=10;j<16;j++){ //data[10]~data[15]の引数に注意
+				if (regexp.test(data[j])){ data[j]="0"; }
+			}
+			company[i] = new Company(data[0],data[1],data[9],data[10],data[11],data[12],data[13],data[14],data[15]);
+		}
+	};
+	xhr.open("get", filename, true);
+	xhr.send(null);
+}
+
+//企業主導型保育事業用　読み込んだcsvからinfowindowと左側に表示する施設HTML生成
+function attachMessage2(getmarker, name, add, tel, url, zero, one, two, three, four, five, month, month2, ku, posy, posx, category, day) {
+	var urlstr;
+	//URLが空白の場合は、何も表示しない。あれば「施設情報」にURLを埋め込む
+	if (url=="") {
+		urlstr="";
+	} else {
+		urlstr='<a href='+url+'>施設情報</a></br>';
+	}
+
+	//企業主導型保育事業の場合、施設名の前にその旨を追記
+	var name2 = "企業主導型保育事業（認可外保育施設）</br>" + name;
+	var siteistr = "";
+
+	var ninko="";
+
+	//Infowindow生成
+	var infowin = new google.maps.InfoWindow({ content:name2+"</br>"+add+"</br>"+"電話番号："+tel+"</br>"+urlstr+"空き状況（"+month+"月"+day+"日現在）</br>"+"0歳児："+zero+"</br>1歳児："+one+"</br>2歳児："+two+"</br>3歳児："+three+"</br>4歳児："+four+"</br>5歳児："+five+"</br>"+siteistr+"</br>"});
+
+	//施設情報HTML生成(cssでアコーディオンにする)
+	var $name=$('<h2>'+name2+'</h2>');
+	var $add=$('<div class="content">'+add+'</div>');
+	var $tel=$('<div class="content">'+"電話番号："+tel+'</div>');
+	var $url=$('<div class="content">'+urlstr+'</div>');
+	var $month=$('<div class="content">'+"空き状況("+month+"月"+day+"日現在)"+'</div>');
+	var $space=$('<div class="content">'+"0歳児："+zero+"</br>1歳児："+one+"</br>2歳児："+two+"</br>3歳児："+three+"<br>4歳児："+four+"</br>5歳児："+five+'</div>');
+	var $sitei=$('<div class="content">'+siteistr+'</div>');
+	//該当区のみ、幼稚園、表示する
+	//区名表示
+	document.getElementById("kuname").innerHTML = kuname+"内の幼稚園・保育所等施設情報です。";
+	//以下、カテゴリーごとにアコーディオンに挿入
+	if (ku==kuname){
+			$('<li data-posy='+posy+' data-posx='+posx+'></li>')
+			.append($name)
+			.append($add)
+			.append($tel)
+			.append($url)
+			.append($month)
+			.append($space)
+			.append($sitei)
+			.appendTo('.accordion5');
+	}
+}
+
+</script>
+<!--園名をクリックすると表示するアコーディオン生成-->
+<script type="text/javascript">
+$(function(){
+	$('.accordion')
+	.on('click', 'li', function(){
+		var $this = $(this);
+		//コンテンツを開く
+		$this
+		.toggleClass('expanded')
+		.children('.content')
+		.slideToggle('fast');
+	});
+});
+</script>
+</head>
+<body>
+<div class="header">
+	<p>幼稚園・保育所等マップ</p>
+</div>
+<ul class="accordion" style="float:left; width:30%">
+	<p>■企業主導型保育事業(認可外保育施設)</p>
+	<div class="accordion5"></div>
+</ul>
+<div id="map_container">
+	<div id="map_canvas"></div>
+</div>
+</body>
+</html>
+<!-- 2018.5.3 企業型のデータ「０歳児から...」のRegExpに対応 -->

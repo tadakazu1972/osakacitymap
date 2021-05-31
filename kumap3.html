@@ -39,6 +39,7 @@
 		}
 		.infowindow2 {
 			position:absolute;
+      pointer-events: none;
 			padding: 5px 12px 10px;
 			top: 220px;
 			left: 50%;
@@ -61,20 +62,6 @@
 			background: blue;
 			color: white;
 			border-radius: 5px;
-			z-index:9999;
-		}
-		.bar {
-			position:absolute;
-			pointer-events: none;
-			width: 2px;
-			background: magenta;
-			z-index:9999;
-		}
-		.axis {
-			position:absolute;
-			pointer-events: none;
-			background: black;
-			text-anchor: middle;
 			z-index:9999;
 		}
 		.label { position:absolute; pointer-events: none; font-size: 8px; color: black; }
@@ -282,7 +269,7 @@
 				*/
 				//infowindow描画
 				//街区があるときはinfowindowのpointer-eventsをオンにする
-				infowindow.style("pointer-events", "auto");
+				//infowindow.style("pointer-events", "auto");
 				info[0] = result[0].町名; //とりあえずヒットした先頭の町名を選択
 				tooltip[0].style("font-weight", "bold")
 				        .style("font-size", fontSize)

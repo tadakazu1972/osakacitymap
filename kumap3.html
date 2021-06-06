@@ -7,10 +7,25 @@
 	<!--d3.js v6を採用しようとしたが、IE11はv4しか対応していない-->
 	<script src="https://d3js.org/d3.v4.min.js"></script>
 	<!--jQueryライブラリ読み込み-->
-	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="http://code.jquery.com/jquery-3.4.1.min.js"></script>
 	<style>
+		html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, input, textarea, legend, article, aside, footer, header, hgroup, menu, nav, section {
+			border: 0;
+			color: #000;
+			font-size: 100%;
+			font: inherit;
+			margin: 0;
+			padding: 0;
+			vertical-align: baseline;
+		}
+		h1, h2, h3, h4, h5, h6 {
+			font-weight: bold;
+		}
+		h1 {
+			font-size: x-large;
+		}
 		body { font-family: "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif; }
-		h1,h2,p { padding: 6px; text-align: center; }
+		h1,h2,p { text-align: center; }
 		svg { position:fixed; left:30%; border:1px; background-color: white; text-align:left; }
 		path { fill:white; stroke:black; stroke-width:0.25; }
 		.tooltip {
@@ -68,7 +83,7 @@
 			z-index:9999;
 		}
 		.label { position:absolute; pointer-events: none; font-size: 8px; color: black; }
-		.check { font-size:x-large; position: fixed; top: 17%; right:7%; border: 2px solid red; }
+		.check { font-size:x-large; position: fixed; top: 17%; right:7%; border: 2px solid red; z-index:9999; }
 		.station { pointer-events: none; }
 		/* アコーディオン */
 		ul {
@@ -78,18 +93,19 @@
 			background: #fff;
 		}
 		.accordion {
-			font-size: small;
+			position: relative;
+			z-index:9999;
 		}
 		.accordion > li {
 			margin: 0 0 4px 0;
-			padding: 2px 2px;
+			padding: 4px 0 4px 0;
 			border-radius: 5px;
-			background-color: #ededed;
+			background-color: #def;
 			background-position: bottom;
 			background-repeat: no-repeat;
 		}
 		.accordion > li:hover {
-			background-color: #ddd;
+			background-color: #ff0;
 		}
 		.accordion > li > {
 			font-weight: normal;
@@ -105,14 +121,14 @@
 		}
 		/* アコーディオンが開いたときのスタイル */
 		.accordion > li.expanded {
-			background-color: #ddd;
+			background-color: #ffb;
 		}
-		.accordion > li.expanded > h2 {
+		.accordion > li.expanded > {
 			font-weight: bold;
 		}
-		.accordion > li.expanded > h2 {
-			margin: 10px 0 0 0;
-			padding: 10px 0 0 0;
+		.accordion > li.expanded > h3 {
+			margin: 0 0 0 0;
+			padding: 0 0 0 0;
 			border-top: solid 1px #fff;
 		}
 		.accordion > li.expanded > a {
@@ -181,7 +197,7 @@
 				background-repeat: no-repeat;
 			}
 			.accordion > li:hover {
-				background-color: #ddd;
+				background-color: #FF0;
 			}
 			.accordion > li > h2 {
 				font-weight: normal;
@@ -191,7 +207,7 @@
 			}
 			/* アコーディオンが開いたときのスタイル */
 			.accordion > li.expanded {
-				background-color: #ddd;
+				background-color: #FF0;
 			}
 			.accordion > li.expanded > h2 {
 				font-weight: bold;
@@ -212,7 +228,6 @@
 		<p><div id="kuname2"></div></p>
 	</div>
 	<ul class="accordion" style="float:left; width:30%">
-		<div class="accordion"></div>
 	</ul>
 	<form name="checkbox" class="check">
 		<label><input type="checkbox" onclick="drawStation()">鉄道駅　表示　</label>
@@ -237,7 +252,6 @@
 	var file = decodeURIComponent(key["file"]);
 	//トップページからクリックで引き継いだ区名をidタグkunameに表示する処理
 	document.getElementById("kuname").innerHTML = ku + "　町丁目マップ";
-	document.getElementById("kuname2").innerHTML = ku +"内のごみ収集情報です。";
 	//
 	//-----第２段階　町丁目ごとにデータを格納したCSV読み込み
 	//変数初期化
@@ -259,7 +273,7 @@
 			var $pla=$('<div class="content">'+"容器包装プラ"+element.容器包装プラスチック_午前+" "+element.容器包装プラスチック_午後+'</div>');
 			var $paper=$('<div class="content">'+"古紙衣類"+element.古紙衣類_午前+" "+element.古紙衣類_午後+'</div>');
 			//以下、カテゴリーごとにアコーディオンに挿入
-			$('<li></li>')
+			$('<li><li>')
 				.append($name)
 				.append($normal)
 				.append($res)
@@ -540,6 +554,96 @@
 			})
 	});
 
+	//infowindow2 ごみ収集情報 描画
+	function drawInfowindow2(){
+		//infowindow2ポインターイベント復活
+		d3.selectAll(".infowindow2").style("pointer-events", "auto");
+							//透明度100%
+							d3.selectAll(".tooltip2").style("opacity", "1")
+							//ボタン復活
+							d3.selectAll(".button").style("pointer-events", "auto").style("opacity", "1")
+							//自身にバインドされたインデックスを取り出してinfo2のインデックスとして使う
+							var index = d3.select(this).datum();
+							infowindow2.style("opacity", "1");
+							//町名
+							tooltip2[0].style("font-size", fontSize)
+										.style("font-weight", "bold")
+										.style("left", (centerX-160)+"px")
+										.style("top", "224px")
+										.text(info2[index].town)
+							//街区名
+							tooltip2[1].style("font-size", fontSize)
+										.style("font-weight", "bold")
+										.style("left", (centerX-160)+"px")
+										.style("top", "256px")
+										.text(info2[index].gaiku)
+							//普通ごみ_午前
+							tooltip2[2].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "288px")
+										.text("普通ごみ(午前)：" + info2[index].normalAM)
+							//普通ごみ_午後
+							tooltip2[3].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "320px")
+										.text("普通ごみ(午後)：" + info2[index].normalPM)
+							//資源ごみ_午前
+							tooltip2[4].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "352px")
+										.text("資源ごみ(午前)：" + info2[index].resAM)
+							//資源ごみ_午後
+							tooltip2[5].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "384px")
+										.text("資源ごみ(午後)：" + info2[index].resPM)
+							//容包プラ_午前
+							tooltip2[6].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "416px")
+										.text("容包プラ(午前)：" + info2[index].plaAM)
+							//容包プラ_午後
+							tooltip2[7].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "448px")
+										.text("容包プラ(午後)：" + info2[index].plaPM)
+							//古紙衣類_午前
+							tooltip2[8].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "480px")
+										.text("古紙衣類(午前)：" + info2[index].paperAM)
+							//古紙衣類_午後
+							tooltip2[9].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "512px")
+										.text("古紙衣類(午後)：" + info2[index].paperPM)
+							//古紙衣類_コミュニティ
+							tooltip2[10].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "544px")
+										.text("古紙衣類(ｺﾐｭﾆﾃｨ)：" + info2[index].paperCOM)
+							//ペットボトル_コミュニティ
+							tooltip2[11].style("font-size", fontSize)
+										.style("left", (centerX-160)+"px")
+										.style("top", "576px")
+										.text("ﾍﾟｯﾄﾎﾞﾄﾙ(ｺﾐｭﾆﾃｨ)：" + info2[index].petCOM)
+							//閉じるボタン
+							tooltip2[12].attr("class", "button")
+										.style("font-size", fontSize)
+										.style("font-weight", "bold")
+										.style("left", (centerX-70)+"px")
+										.style("top", "618px")
+										.text("閉じる")
+										.on('click', function(){
+											d3.selectAll(".tooltip2").style("opacity", "0")
+											d3.selectAll(".infowindow2")
+											  .style("pointer-events", "none")
+											  .style("opacity", "0")
+											d3.select(this).style("opacity", "0")
+											  .style("pointer-events", "none")
+										})
+	}
+
 	//チェックボックスのON/OFFに応じて、駅と駅名を表示ON/OFF
 	function drawStation(){
 		//チェックをはずしていたら駅名　消去
@@ -553,6 +657,7 @@
 	$(function(){
 		$('.accordion')
 		.on('click', 'li', function(){
+			//drawInfowindow2();
 			var $this = $(this);
 			//コンテンツを開く
 			$this

@@ -46,7 +46,7 @@
 			position:absolute;
 			padding: 5px 12px 10px;
 			width: 300px;
-			height: 210px;
+			height: 160px;
 			background: #fff;
 			-webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
 			-moz-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
@@ -54,6 +54,7 @@
 			border-radius: 5px;
 			color : #666;
 			z-index:9997;
+			display: none;
 		}
 		.infowindow2 {
 			position:absolute;
@@ -65,7 +66,7 @@
 			-webkit-transform: translate(-50%, 0%);
 			-ms-transform: translate(-50%, 0%);
 			width: 300px;
-			height: 440px;
+			height: 280px;
 			background: #ffe;
 			-webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
 			-moz-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
@@ -96,7 +97,7 @@
 			position: relative;
 			z-index:9999;
 		}
-		.accordion > li {
+		.accordion1 > li {
 			margin: 0 0 4px 0;
 			padding: 4px 0 4px 0;
 			border-radius: 5px;
@@ -104,34 +105,34 @@
 			background-position: bottom;
 			background-repeat: no-repeat;
 		}
-		.accordion > li:hover {
+		.accordion1 > li:hover {
 			background-color: #ff0;
 		}
-		.accordion > li > {
+		.accordion1 > li > {
 			font-weight: normal;
 		}
-		.accordion > li > a {
+		.accordion1 > li > a {
 			color: #5555ff;
 			border-bottom: 1px solid #eee;
 			padding-bottom: 1px;
 			background: linear-gradient(transparent 90%, #cbe111 100%);
 		}
-		.accordion > li .content {
+		.accordion1 > li .content {
 			display: none;
 		}
 		/* アコーディオンが開いたときのスタイル */
-		.accordion > li.expanded {
+		.accordion1 > li.expanded {
 			background-color: #ffb;
 		}
-		.accordion > li.expanded > {
+		.accordion1 > li.expanded > {
 			font-weight: bold;
 		}
-		.accordion > li.expanded > h3 {
+		.accordion1 > li.expanded > h3 {
 			margin: 0 0 0 0;
 			padding: 0 0 0 0;
 			border-top: solid 1px #fff;
 		}
-		.accordion > li.expanded > a {
+		.accordion1 > li.expanded > a {
 			color: #0000ff;
 		}
 		/*RESPONSIVE: スマートフォン ウィンドウ幅600px以下*/
@@ -228,6 +229,7 @@
 		<p><div id="kuname2"></div></p>
 	</div>
 	<ul class="accordion" style="float:left; width:30%">
+		<div class="accordion1"></div>
 	</ul>
 	<form name="checkbox" class="check">
 		<label><input type="checkbox" onclick="drawStation()">鉄道駅　表示　</label>
@@ -268,18 +270,26 @@
 			csvdata.push(element);
 			//アコーディオンに書き込み
 			var $name=$('<h2>'+element.町名+" "+element.備考+'</h2>');
-			var $normal=$('<div class="content">'+"普通ごみ:"+element.普通ごみ_午前+" "+element.普通ごみ_午後+'</div>');
-			var $res=$('<div class="content">'+"資源ごみ："+element.資源ごみ_午前+" "+element.資源ごみ_午後+'</div>');
-			var $pla=$('<div class="content">'+"容器包装プラ"+element.容器包装プラスチック_午前+" "+element.容器包装プラスチック_午後+'</div>');
-			var $paper=$('<div class="content">'+"古紙衣類"+element.古紙衣類_午前+" "+element.古紙衣類_午後+'</div>');
+			//普通ごみ　午前　午後　判定
+			var normal_str = element.普通ごみ_午前 != "" ? element.普通ごみ_午前 + "（午前）" : element.普通ごみ_午後 + "（午後）";
+			var $normal=$('<div class="content">'+"普通ごみ　　：" + normal_str + '</div>');
+			//資源ごみ　午前　午後　判定
+			var res_str = element.資源ごみ_午前 != "" ? element.資源ごみ_午前  + "（午前）" : element.資源ごみ_午後 + "（午後）";
+			var $res=$('<div class="content">'+"資源ごみ　　：" + res_str + '</div>');
+			//容器包装プラ　午前　午後　判定
+			var pla_str = element.容器包装プラスチック_午前 != "" ? element.容器包装プラスチック_午前 + "（午前）" : element.容器包装プラスチック_午後 + "（午後）";
+			var $pla=$('<div class="content">'+"容器包装プラ："+ pla_str +'</div>');
+			//古紙衣類　午前　午後　判定
+			var papaer_str = element.古紙衣類_午前 != "" ? element.古紙衣類_午前 + "（午前）" : element.古紙衣類_午後 + "（午後）";
+			var $paper=$('<div class="content">'+"古紙衣類　　："+ pla_str +'</div>');
 			//以下、カテゴリーごとにアコーディオンに挿入
-			$('<li><li>')
+			$('<li></li>')
 				.append($name)
 				.append($normal)
 				.append($res)
 				.append($pla)
 				.append($paper)
-				.appendTo('.accordion');
+				.appendTo('.accordion1');
 		});
 	});
 	//
@@ -399,10 +409,11 @@
 				.style("fill","pink");
 				//画面端になるとinfowindow内文字が見えなくなるのを防ぐ(画面半分超えると座標-350) 3項演算子
 				var posX = event.pageX > innerWidth/2 ? event.pageX - 300 : event.pageX+20;
-				var posY = event.pageY > innerHeight/2 ? event.pageY - 50 : event.pageY;
+				var posY = event.pageY > innerHeight/2 ? event.pageY -200 : event.pageY;
 				//infowindowの下地と枠
 				infowindow.style("left", (posX)+"px")
-				          .style("top",  (posY)+"px");
+				          .style("top",  (posY)+"px")
+						  .style("display", "block");
 				//町丁目名、情報をtooltipに表示
 				//マウスオーバーしているgeojsonの町丁目名と等しい町丁目名のレコードをcsvdataから検索する
 				//filterで町丁目名一致を返すと、男、女、計の３つ配列を返す
@@ -471,62 +482,36 @@
 										.style("left", (centerX-160)+"px")
 										.style("top", "256px")
 										.text(info2[index].gaiku)
-							//普通ごみ_午前
+							//普通ごみ
+							var normal_str = info2[index].normalAM != "" ? info2[index].normalAM + "（午前）" : info2[index].normalPM + "（午後）";
 							tooltip2[2].style("font-size", fontSize)
 										.style("left", (centerX-160)+"px")
 										.style("top", "288px")
-										.text("普通ごみ(午前)：" + info2[index].normalAM)
-							//普通ごみ_午後
+										.text("普通ごみ：" + normal_str)
+							//資源ごみ
+							var res_str = info2[index].resAM != "" ? info2[index].resAM + "（午前）" : info2[index].resPM + "（午後）";
 							tooltip2[3].style("font-size", fontSize)
 										.style("left", (centerX-160)+"px")
 										.style("top", "320px")
-										.text("普通ごみ(午後)：" + info2[index].normalPM)
-							//資源ごみ_午前
+										.text("資源ごみ：" + res_str)
+							//容包プラ
+							var pla_str = info2[index].plaAM != "" ? info2[index].plaAM + "（午前）" : info2[index].plaPM + "（午後）";
 							tooltip2[4].style("font-size", fontSize)
 										.style("left", (centerX-160)+"px")
 										.style("top", "352px")
-										.text("資源ごみ(午前)：" + info2[index].resAM)
-							//資源ごみ_午後
+										.text("容包プラ：" + pla_str)
+							//古紙衣類
+							var paper_str = info2[index].paperAM != "" ? info2[index].paperAM + "（午前）" : info2[index].paperPM + "（午後）";
 							tooltip2[5].style("font-size", fontSize)
 										.style("left", (centerX-160)+"px")
 										.style("top", "384px")
-										.text("資源ごみ(午後)：" + info2[index].resPM)
-							//容包プラ_午前
-							tooltip2[6].style("font-size", fontSize)
-										.style("left", (centerX-160)+"px")
-										.style("top", "416px")
-										.text("容包プラ(午前)：" + info2[index].plaAM)
-							//容包プラ_午後
-							tooltip2[7].style("font-size", fontSize)
-										.style("left", (centerX-160)+"px")
-										.style("top", "448px")
-										.text("容包プラ(午後)：" + info2[index].plaPM)
-							//古紙衣類_午前
-							tooltip2[8].style("font-size", fontSize)
-										.style("left", (centerX-160)+"px")
-										.style("top", "480px")
-										.text("古紙衣類(午前)：" + info2[index].paperAM)
-							//古紙衣類_午後
-							tooltip2[9].style("font-size", fontSize)
-										.style("left", (centerX-160)+"px")
-										.style("top", "512px")
-										.text("古紙衣類(午後)：" + info2[index].paperPM)
-							//古紙衣類_コミュニティ
-							tooltip2[10].style("font-size", fontSize)
-										.style("left", (centerX-160)+"px")
-										.style("top", "544px")
-										.text("古紙衣類(ｺﾐｭﾆﾃｨ)：" + info2[index].paperCOM)
-							//ペットボトル_コミュニティ
-							tooltip2[11].style("font-size", fontSize)
-										.style("left", (centerX-160)+"px")
-										.style("top", "576px")
-										.text("ﾍﾟｯﾄﾎﾞﾄﾙ(ｺﾐｭﾆﾃｨ)：" + info2[index].petCOM)
+										.text("古紙衣類：" + paper_str)
 							//閉じるボタン
 							tooltip2[12].attr("class", "button")
 										.style("font-size", fontSize)
 										.style("font-weight", "bold")
 										.style("left", (centerX-70)+"px")
-										.style("top", "618px")
+										.style("top", "436px")
 										.text("閉じる")
 										.on('click', function(){
 											d3.selectAll(".tooltip2").style("opacity", "0")

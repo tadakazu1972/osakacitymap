@@ -238,8 +238,7 @@
 	<div class="summary">
 		<p><div id="kuname2"></div></p>
 	</div>
-	//アコーディオン
-	<div id="accordion"></div>
+	<div id="accordion" style="float:left; width:30%"></div>
 	<!--<ul class="accordion" style="float:left; width:30%">
 		<div class="accordion1"></div>
 	</ul>-->
@@ -275,54 +274,89 @@
 	var fontSize = "20px";
 	var csvdata = [];  //CSV格納先
 	//ごみ収集情報　CSV読み込み
+	var str = "";
+	var accordion_str = "";
+	var gaiku_group = "";
 	var town_old = "";
 	var chome_old = "";
 	var gaiku_old = "";
 	d3.csv(csvfile, function(data){
 		//行ごとにcsvdataに格納していく
 		data.forEach(function(element){
-			console.log(element);
+			//console.log(element);
 			csvdata.push(element);
 			//アコーディオンに書き込み
-			var $town = $('<span><h2>'+element.町名+'</h2></span>');
-			var $chome =$('<div class="content">'+element.丁目+'</div>');
-			var $gaiku =$('<div class="content">'+element.備考+'</div>');
-			//普通ごみ　午前　午後　判定
-			var normal_str = element.普通ごみ_午前 != "" ? element.普通ごみ_午前 + "（午前）" : element.普通ごみ_午後 + "（午後）";
-			var $normal=$('<div class="content">'+"普通ごみ　　：" + normal_str + '</div>');
-			//資源ごみ　午前　午後　判定
-			var res_str = element.資源ごみ_午前 != "" ? element.資源ごみ_午前  + "（午前）" : element.資源ごみ_午後 + "（午後）";
-			var $res=$('<div class="content">'+"資源ごみ　　：" + res_str + '</div>');
-			//容器包装プラ　午前　午後　判定
-			var pla_str = element.容器包装プラスチック_午前 != "" ? element.容器包装プラスチック_午前 + "（午前）" : element.容器包装プラスチック_午後 + "（午後）";
-			var $pla=$('<div class="content">'+"容器包装プラ："+ pla_str +'</div>');
-			//古紙衣類　午前　午後　判定
-			var papaer_str = element.古紙衣類_午前 != "" ? element.古紙衣類_午前 + "（午前）" : element.古紙衣類_午後 + "（午後）";
-			var $paper=$('<div class="content">'+"古紙衣類　　："+ pla_str +'</div>');
-			//貼り付け
-			if (town_old != $town){ 
-				town_old = $town;
-				$('#accordion')
-				.append($town)
-				.append('<ul>')
-			 } else if (chome_old != $chome){
-				 chome_old = $chome;
-				 $('<li></li>')
-				    .append($chome);
-			 } else if (gaiku_now != $gaiku){
-				 gaiku_now = $gaiku;
-				 $('<li></li>')
-				    .append($gaiku)
-					.append($normal)
-					.append($res)
-					.append($pla)
-					.append($paper)
-					.appendTo('.accordion1');
-			 }
+			if (town_old === ""){
+				town_old = element.町名;
+				var $town = '<span><h3>'+element.町名+'</h3></span><ul>';
+			} else if (town_old != element.町名){
+				town_old = element.町名;
+				var $town = '</ul><span><h3>'+element.町名+'</h3></span><ul>';
+			} else {
+				var $town = "";
+			}
+			//console.log($town);
 			
-			//var $name=$('<h2>'+element.町名+" "+element.備考+'</h2>');
+			if (chome_old === ""){
+				chome_old = element.丁目;
+				var $chome = '<li>'+element.丁目+'<ul>';
+			} else if (chome_old != element.丁目){
+				if (chome_old === "1丁目"){
+					chome_old = element.丁目;
+					var $chome = '<li>'+element.丁目+'<ul>';
+				} else {
+					chome_old = element.丁目;
+					var $chome = '</ul></li><li>'+element.丁目+'<ul>';
+				}
+			} else {
+				var $chome = "";
+			}
+			//console.log($chome);
+			
+			//普通ごみ　午前　午後　判定
+			if (element.普通ごみ_午前 === "※" || element.普通ごみ_午後 === "※"){
+				var $normal = '<li>普通ごみ：'+"※"+'</li>';
+			} else if (element.普通ごみ_午前 != ""){
+				var $normal = '<li>普通ごみ：'+element.普通ごみ_午前+"（午前）"+'</li>';
+			} else if (element.普通ごみ_午後 != ""){
+				var $normal = '<li>普通ごみ：'+element.普通ごみ_午後+"（午後）"+'</li>';
+			}
+			//資源ごみ　午前　午後　判定
+			if (element.資源ごみ_午前 === "※" || element.資源ごみ_午後 === "※"){
+				var $res = '<li>資源ごみ：'+"※"+'</li>';
+			} else if (element.資源ごみ_午前 != ""){
+				var $res = '<li>資源ごみ：'+element.資源ごみ_午前+"（午前）"+'</li>';
+			} else if (element.資源ごみ_午後 != ""){
+				var $res = '<li>資源ごみ：'+element.資源ごみ_午後+"（午後）"+'</li>';
+			}
+			//容器包装プラ　午前　午後　判定
+			if (element.容器包装プラスチック_午前 === "※" || element.容器包装プラスチック_午後 === "※"){
+				var $pla = '<li>容器包装プラスチック：'+"※"+'</li>';
+			} else if (element.容器包装プラスチック_午前 != ""){
+				var $pla = '<li>容器包装プラスチック：'+element.容器包装プラスチック_午前+"（午前）"+'</li>';
+			} else if (element.容器包装プラスチック_午後 != ""){
+				var $pla = '<li>容器包装プラスチック：'+element.容器包装プラスチック_午後+"（午後）"+'</li>';
+			}
+			//古紙衣類　午前　午後　判定
+			if (element.古紙衣類_午前 === "※" || element.古紙衣類_午後 === "※"){
+				var $paper = '<li>古紙衣類：'+"※"+'</li>';
+			} else if (element.古紙衣類_午前 != ""){
+				var $paper = '<li>古紙衣類：'+element.古紙衣類_午前+"（午前）"+'</li>';
+			} else if (element.古紙衣類_午後 != ""){
+				var $paper = '<li>古紙衣類：'+element.古紙衣類_午後+"（午後）"+'</li>';
+			}
+			var $gaiku = '<li>'+element.備考+'<ul>'+ $normal + $res + $pla + $paper + '</ul></li>';
+			//console.log($gaiku);
+			//ため込む
+			str = str + $town + $chome + $gaiku;			
+			//var accordion_str = accordion_str + $town + $chome + $gaiku;
 		});
+		console.log(str);
+		//貼り付け
+		$('#accordion')
+			.append(str);
 	});
+	
 	//
 	//------第３段階　町丁目境界データgeojsonを読み込み描画する
 	//描画エリア設定
@@ -450,7 +484,7 @@
 				//filterで町丁目名一致を返すと、男、女、計の３つ配列を返す
 				//よって、[2]として計を読み込む
 				result = csvdata.filter(function (v) {
-					return v.町名 === d.properties.S_NAME;
+					return v.町名+v.丁目 === d.properties.S_NAME;
 				});
 				//console.log(result);
 				var length = result.length;
@@ -463,7 +497,7 @@
 				//infowindow描画
 				//街区があるときはinfowindowのpointer-eventsをオンにする
 				//infowindow.style("pointer-events", "auto");
-				info[0] = result[0].町名; //とりあえずヒットした先頭の町名を選択
+				info[0] = result[0].町名+result[0].丁目; //とりあえずヒットした先頭の町名を選択
 				tooltip[0].style("font-weight", "bold")
 				        .style("font-size", fontSize)
 				        .style("left", (posX)+"px")

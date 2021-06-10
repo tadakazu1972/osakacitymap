@@ -89,6 +89,16 @@
 		/* アコーディオン */
 		ul {
 			list-style: none;
+			display: none;
+		}
+		span {
+			cursor: pointer;
+		}
+		li {
+			cursor: pointer;
+		}
+		/*ul {
+			list-style: none;
 		}
 		.summary {
 			background: #fff;
@@ -119,9 +129,9 @@
 		}
 		.accordion1 > li .content {
 			display: none;
-		}
+		}*/
 		/* アコーディオンが開いたときのスタイル */
-		.accordion1 > li.expanded {
+		/*.accordion1 > li.expanded {
 			background-color: #ffb;
 		}
 		.accordion1 > li.expanded > {
@@ -134,7 +144,7 @@
 		}
 		.accordion1 > li.expanded > a {
 			color: #0000ff;
-		}
+		}*/
 		/*RESPONSIVE: スマートフォン ウィンドウ幅600px以下*/
 		@media screen and (max-width:600px) {
 			#map_container {
@@ -228,9 +238,11 @@
 	<div class="summary">
 		<p><div id="kuname2"></div></p>
 	</div>
-	<ul class="accordion" style="float:left; width:30%">
+	//アコーディオン
+	<div id="accordion"></div>
+	<!--<ul class="accordion" style="float:left; width:30%">
 		<div class="accordion1"></div>
-	</ul>
+	</ul>-->
 	<form name="checkbox" class="check">
 		<label><input type="checkbox" onclick="drawStation()">鉄道駅　表示　</label>
 	</form>
@@ -263,16 +275,16 @@
 	var fontSize = "20px";
 	var csvdata = [];  //CSV格納先
 	//ごみ収集情報　CSV読み込み
-	var town_now = "";
-	var chome_now = "";
-	var gaiku_now = "";
+	var town_old = "";
+	var chome_old = "";
+	var gaiku_old = "";
 	d3.csv(csvfile, function(data){
 		//行ごとにcsvdataに格納していく
 		data.forEach(function(element){
 			console.log(element);
 			csvdata.push(element);
 			//アコーディオンに書き込み
-			var $town = $('<h2>'+element.町名);
+			var $town = $('<span><h2>'+element.町名+'</h2></span>');
 			var $chome =$('<div class="content">'+element.丁目+'</div>');
 			var $gaiku =$('<div class="content">'+element.備考+'</div>');
 			//普通ごみ　午前　午後　判定
@@ -288,16 +300,15 @@
 			var papaer_str = element.古紙衣類_午前 != "" ? element.古紙衣類_午前 + "（午前）" : element.古紙衣類_午後 + "（午後）";
 			var $paper=$('<div class="content">'+"古紙衣類　　："+ pla_str +'</div>');
 			//貼り付け
-			if (town_now != $town){ 
-				town_now = $town;
-				$('<li></li>')
-				    .append($town)
-					.appendTo('.accordion1');
-			 } else if (chome_now != $chome){
-				 chome_now = $chome;
+			if (town_old != $town){ 
+				town_old = $town;
+				$('#accordion')
+				.append($town)
+				.append('<ul>')
+			 } else if (chome_old != $chome){
+				 chome_old = $chome;
 				 $('<li></li>')
-				    .append($chome)
-					.appendTo('.accordion1');
+				    .append($chome);
 			 } else if (gaiku_now != $gaiku){
 				 gaiku_now = $gaiku;
 				 $('<li></li>')
@@ -660,6 +671,19 @@
 	}
 	//町丁目　街区名をクリックすると表示するアコーディオン生成
 	$(function(){
+		//親メニュー
+		$('span').click(function(){
+			//メニュー表示/非表示
+			$(this).next('ul').slideToggle('fast');
+		});
+		//子メニュー
+		$('li').click(function(e){
+			//メニュー表示/非表示
+			$(this).children('ul').slideToggle('fast');
+			e.stopPropagation();
+		})
+	})
+	/*$(function(){
 		$('.accordion')
 		.on('click', 'li', function(){
 			//drawInfowindow2();
@@ -670,7 +694,7 @@
 			.children('.content')
 			.slideToggle('fast');
 		});
-	});
+	});*/
 	</script>
   </body>
 </html>
